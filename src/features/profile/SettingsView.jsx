@@ -128,7 +128,22 @@ export function SettingsView({
       </section>
 
       {/* ── Вход ──────────────────────────────────────────────── */}
-      <TelegramLinkCard auth={auth} toasts={toasts} user={user} />
+      {/*
+        * Карточке нужны разобранные поля, а не объект `auth` целиком.
+        * При переносе экрана сюда уехал `auth={auth}` — и карточка,
+        * не найдя ни `links`, ни `inTelegram`, честно писала «не привязан»
+        * даже тому, кто зашёл из самого Mini App.
+        */}
+      {auth && (
+        <TelegramLinkCard
+          user={user}
+          links={auth.links}
+          inTelegram={auth.inTelegram}
+          onLink={auth.linkTelegram}
+          onUnlink={auth.unlinkTelegram}
+          toast={toasts}
+        />
+      )}
 
       {/* ── Импорт ────────────────────────────────────────────── */}
       <section className="section">
