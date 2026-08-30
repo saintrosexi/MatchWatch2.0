@@ -58,9 +58,10 @@ const STEPS = [
   },
   {
     key: 'tools',
-    target: '.hud__toolbar-right',
+    target: '[data-coach="tools"]',
     title: 'Кубик и фильтры',
     text: 'Кубик достаёт случайный фильм из тех, что вам подходят, — когда решать не хочется вовсе. Фильтры сужают ленту: жанры, годы, рейтинг, страна.',
+    /* Якорь одинаков в телефонном и десктопном шеллах — см. `data-coach`. */
     rows: [
       { icon: Dices, tone: 'info', label: 'кубик — случайный фильм' },
       { icon: SlidersHorizontal, tone: 'info', label: 'ползунки — фильтры ленты' },

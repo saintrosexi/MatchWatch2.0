@@ -18,6 +18,7 @@ import { CollectionView } from '../features/collection/CollectionView.jsx';
 import { FeedModeSwitch } from '../features/deck/FeedModeSwitch.jsx';
 import { DeckCoach, coachSeen } from '../features/deck/DeckCoach.jsx';
 import { VaultView } from '../features/vault/VaultView.jsx';
+import { loadFriends } from '../engine/social.js';
 import { PremiumSheet } from '../features/premium/PremiumSheet.jsx';
 import { usePremium } from '../hooks/usePremium.js';
 import { NewsScreen } from '../features/news/NewsScreen.jsx';
@@ -123,6 +124,14 @@ export default function App() {
   const [userState, setUserState] = useState(null);
   const [showcaseOpen, setShowcaseOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
+  /*
+   * Кто уже в друзьях — множество идентификаторов.
+   *
+   * Живёт в приложении, а не в каждом экране: кнопку «добавить в друзья»
+   * предлагают комната, празднование мэтча и профиль, и без общего знания
+   * каждая из них врала независимо от остальных. Дозагрузка одна на вход.
+   */
+  const [friendIds, setFriendIds] = useState(() => new Set());
   /**
    * Объявление, которое человек ещё не видел.
    *
@@ -160,6 +169,20 @@ export default function App() {
    * запуску. Лишний `useState` заставлял бы перерисовывать всё
    * приложение ради значения, которого никто не читает.
    */
+  useEffect(() => {
+    if (!user?.uid) { setFriendIds(new Set()); return; }
+    let alive = true;
+    loadFriends()
+      .then((list) => {
+        if (!alive) return;
+        setFriendIds(new Set(list
+          .filter((f) => f.status === 'accepted')
+          .map((f) => f.id)));
+      })
+      .catch(() => { /* список друзей — украшение кнопки, не условие работы */ });
+    return () => { alive = false; };
+  }, [user?.uid]);
+
   const markNewsSeen = useCallback((item) => {
     if (!item) return;
     const seen = loadLocal(STORAGE_KEYS.NEWS_SEEN, []);
@@ -991,7 +1014,7 @@ export default function App() {
    * целиком, а не каждый по отдельности: одновременно виден ровно один.
    */
   const content = renderView({
-    view, room, sessionUser, userState, taste, prefs, toasts, history, premium,
+    view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
     setView, setPrefs, setActorDeck, setRoomSession, setDetailsEntry, setPremiumOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
     handleRemoveFavorite, handleUndoFromList, auth,
@@ -1037,12 +1060,31 @@ export default function App() {
             onLogout={auth.logout}
             actions={view === VIEW.DECK && (
               <div className="row gap-2">
-                <button type="button" className="btn btn--ghost btn--sm" onClick={() => setRouletteOpen(true)}>
-                  <Dices size={16} /> Рулетка
-                </button>
-                <button type="button" className="btn btn--ghost btn--sm" onClick={() => setFiltersOpen(true)}>
-                  <SlidersHorizontal size={16} /> Фильтры
-                </button>
+                {/*
+                  * Переключатель ленты был только на телефоне, и это
+                  * недосмотр: на десктопе те же две ленты, и без него
+                  * «Другое» нельзя включить вообще никак.
+                  */}
+                {deckMode === DECK_MODE.SOLO && (
+                  <FeedModeSwitch value={feedMode} onChange={setFeedMode} />
+                )}
+                {/*
+                  * `data-coach` — якорь для обучающих подсказок.
+                  *
+                  * Раньше они целились в класс `.hud__toolbar-right`,
+                  * который есть только в телефонном шелле: на десктопе
+                  * шаг про кубик и фильтры не показывал ни на что.
+                  * Атрибут одинаков в обоих шеллах и не зависит от того,
+                  * как эти кнопки оформлены.
+                  */}
+                <div className="row gap-2" data-coach="tools">
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setRouletteOpen(true)}>
+                    <Dices size={16} /> Рулетка
+                  </button>
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setFiltersOpen(true)}>
+                    <SlidersHorizontal size={16} /> Фильтры
+                  </button>
+                </div>
               </div>
             )}
           >
@@ -1075,7 +1117,7 @@ export default function App() {
                 {deckMode === DECK_MODE.SOLO
                   ? <FeedModeSwitch value={feedMode} onChange={setFeedMode} />
                   : <span />}
-                <div className="row gap-2 hud__toolbar-right">
+                <div className="row gap-2 hud__toolbar-right" data-coach="tools">
                   <button type="button" className="hud__pill" onClick={() => setRouletteOpen(true)} aria-label="Кино-рулетка">
                     <Dices size={16} />
                   </button>
@@ -1188,6 +1230,7 @@ export default function App() {
             match={room.celebration}
             roomCode={room.code}
             partners={room.members.filter((m) => m.uid !== user?.uid)}
+            friendIds={friendIds}
             onClose={room.dismissCelebration}
             onOpenWatchlist={() => { room.dismissCelebration(); setView(VIEW.MINE); }}
             /*
@@ -1230,7 +1273,7 @@ const SUBTITLES = ({ view, room, actorDeck }) => {
 
 function renderView(ctx) {
   const {
-    view, room, sessionUser, userState, taste, prefs, toasts, history, premium,
+    view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
     setView, setPrefs, setRoomSession, setDetailsEntry, setActorDeck, setPremiumOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
     handleRemoveFavorite, handleUndoFromList, auth,
@@ -1248,6 +1291,7 @@ function renderView(ctx) {
         <RoomsView
           room={room}
           user={sessionUser}
+          friendIds={friendIds}
           toasts={toasts}
           onCreate={createRoom}
           onEnterRoom={() => { setRoomSession(true); setActorDeck(null); setView(VIEW.DECK); }}

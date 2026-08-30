@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Bookmark, Check, Crown, Heart, Pencil, Star, UserPlus, UserRound } from '../../ui/icons.js';
 import { EmptyState, ErrorState, LoadingState } from '../../ui/States.jsx';
 import { Poster } from '../../ui/Poster.jsx';
+import { Sheet } from '../../ui/Sheet.jsx';
 import { RatingBadge } from '../../ui/RatingPicker.jsx';
-import { loadProfilePage, requestFriend } from '../../engine/social.js';
+import { loadProfilePage, requestFriend, acceptFriend, removeFriend } from '../../engine/social.js';
 import { tagLabel } from '../../../shared/taxonomy/tagOntology.js';
 import { withPlural, FORMS } from '../../../shared/i18n/plural.js';
 
@@ -24,12 +25,10 @@ import { withPlural, FORMS } from '../../../shared/i18n/plural.js';
  */
 export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEditShowcase, toasts }) {
   const [state, setState] = useState({ loading: true });
-  const [friendSent, setFriendSent] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setState({ loading: true });
-    setFriendSent(false);
     // Из комнаты человек известен по идентификатору, из поиска — по нику.
     loadProfilePage({ username: userId ? null : username, userId })
       .then((person) => { if (alive) setState({ loading: false, person }); })
@@ -80,6 +79,21 @@ export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEdi
       /* Фактура — премиальная часть оформления; у остальных `plain`. */
       data-frame={person.premium ? (person.frame ?? 'plain') : 'plain'}
     >
+      {/*
+        * Постер «фильма про себя» красит всю страницу, а не только шапку.
+        *
+        * Обложка в одной шапке читалась как случайная картинка сверху.
+        * Растянутая на весь экран и уведённая в размытие, она перестаёт
+        * быть картинкой и становится цветом страницы — тем самым, который
+        * человек выбрал сам. Читаемость держит плотная подложка поверх:
+        * без неё текст ложится на светлые куски постера.
+        */}
+      {cover?.poster && (
+        <div className="profile-wash" aria-hidden="true">
+          <Poster src={cover.poster} alt="" size="w500" rounded={false} />
+        </div>
+      )}
+
       {back}
 
       <header className="profile-hero">
@@ -217,24 +231,139 @@ export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEdi
           <Pencil size={16} /> Настроить витрину
         </button>
       ) : (
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={friendSent}
-          onClick={async () => {
-            try {
-              const status = await requestFriend(person.id);
-              setFriendSent(true);
-              toasts.success(status === 'accepted' ? 'Теперь вы друзья' : 'Заявка отправлена');
-            } catch (error) {
-              toasts.error(error?.message ?? 'Не получилось отправить заявку');
-            }
-          }}
-        >
-          <UserPlus size={16} /> {friendSent ? 'Заявка отправлена' : 'Добавить в друзья'}
-        </button>
+        <FriendButton person={person} toasts={toasts} />
       )}
     </div>
+  );
+}
+
+/**
+ * Кнопка дружбы — четыре состояния, а не два.
+ *
+ * Раньше она всегда предлагала «добавить в друзья», в том числе тем,
+ * кто уже друзья: заявка уходила в никуда, а человек жал ещё раз,
+ * решив, что не отправилось. Состояние приходит со страницей
+ * (`person.friendship`) и считается на сервере глазами того, кто смотрит.
+ *
+ * «Заявка от него» отделена от «заявки от меня» намеренно: в первом
+ * случае нужно принять, во втором — ждать, и одна кнопка на оба случая
+ * врёт в одном из них.
+ *
+ * Удаление спрашивает подтверждения. Дружба здесь — не подписка,
+ * которую вернёшь одним касанием: обратно её придётся просить.
+ */
+function FriendButton({ person, toasts }) {
+  const [state, setState] = useState(person.friendship ?? 'none');
+  const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  /* Открыли другого человека — состояние обязано начаться заново. */
+  useEffect(() => { setState(person.friendship ?? 'none'); }, [person.id, person.friendship]);
+
+  const run = async (fn, done, fail) => {
+    setBusy(true);
+    try {
+      const result = await fn();
+      done(result);
+    } catch (error) {
+      toasts?.error(error?.message ?? fail);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (state === 'friends') {
+    const name = person.displayName ?? person.username ?? 'этого человека';
+    return (
+      <>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          disabled={busy}
+          onClick={() => setConfirming(true)}
+        >
+          <Check size={16} /> Уже в друзьях
+        </button>
+
+        {/*
+          * Своя шторка, а не системный `confirm`.
+          *
+          * В Telegram WebView системные диалоги заблокированы: `confirm`
+          * молча возвращает false, и кнопка выглядела бы живой, ничего
+          * не делая. Подтверждение при этом обязательно — кнопка стоит
+          * там же, где раньше стояло «добавить», и промах стоил бы дружбы.
+          */}
+        <Sheet
+          open={confirming}
+          onClose={() => setConfirming(false)}
+          variant="center"
+          title={`Удалить ${name} из друзей?`}
+        >
+          <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
+            Общие списки и совпадения никуда не денутся. Но чтобы вернуть
+            дружбу, заявку придётся отправлять заново.
+          </p>
+
+          <div className="row gap-3" style={{ marginTop: 'var(--s-5)' }}>
+            <button
+              type="button"
+              className="btn btn--danger-solid grow"
+              disabled={busy}
+              onClick={() => {
+                setConfirming(false);
+                run(() => removeFriend(person.id),
+                  () => { setState('none'); toasts?.push('Удалили из друзей'); },
+                  'Не получилось удалить');
+              }}
+            >
+              Удалить
+            </button>
+            <button type="button" className="btn btn--ghost grow" onClick={() => setConfirming(false)}>
+              Отмена
+            </button>
+          </div>
+        </Sheet>
+      </>
+    );
+  }
+
+  if (state === 'incoming') {
+    return (
+      <button
+        type="button"
+        className="btn btn--primary"
+        disabled={busy}
+        onClick={() => run(() => acceptFriend(person.id),
+          () => { setState('friends'); toasts?.success('Теперь вы друзья'); },
+          'Не получилось принять заявку')}
+      >
+        <UserPlus size={16} /> Принять заявку
+      </button>
+    );
+  }
+
+  if (state === 'sent') {
+    return (
+      <button type="button" className="btn btn--ghost" disabled>
+        <UserPlus size={16} /> Заявка отправлена
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="btn btn--primary"
+      disabled={busy}
+      onClick={() => run(() => requestFriend(person.id),
+        (status) => {
+          setState(status === 'accepted' ? 'friends' : 'sent');
+          toasts?.success(status === 'accepted' ? 'Теперь вы друзья' : 'Заявка отправлена');
+        },
+        'Не получилось отправить заявку')}
+    >
+      <UserPlus size={16} /> Добавить в друзья
+    </button>
   );
 }
 

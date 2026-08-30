@@ -12,7 +12,11 @@ import { METRIC, MODULE } from '../../../shared/telemetry/events.js';
  * Празднование обоюдного лайка: конфетти, звук, тактильный отклик
  * и готовая карточка для репоста.
  */
-export function MatchCelebration({ match, roomCode, partners = [], onClose, onOpenWatchlist, onFinish }) {
+export function MatchCelebration({
+  match, roomCode, partners = [], onClose, onOpenWatchlist, onFinish,
+  /** Кто уже в друзьях — чтобы не предлагать то, что есть. */
+  friendIds,
+}) {
   const canvasRef = useRef(null);
   const [shareUrl, setShareUrl] = useState(null);
   const [added, setAdded] = useState({});
@@ -87,7 +91,13 @@ export function MatchCelebration({ match, roomCode, partners = [], onClose, onOp
           * Добавить в друзья предлагаем именно здесь: только что стало
           * видно, что вкусы сходятся, и объяснять предложение не нужно.
           */}
-        {partners.filter((p) => !p.isFriend).map((partner) => (
+        {/*
+          * Фильтр был по `partner.isFriend`, которого в участниках
+          * комнаты нет вовсе: условие всегда истинно, и добавить в друзья
+          * предлагалось тем, кто уже в друзьях. Спрашиваем у общего
+          * множества, которое приложение загружает один раз за вход.
+          */}
+        {partners.filter((p) => !friendIds?.has(p.uid)).map((partner) => (
           <button
             key={partner.uid}
             type="button"

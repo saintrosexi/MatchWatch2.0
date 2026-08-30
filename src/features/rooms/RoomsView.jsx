@@ -25,7 +25,11 @@ import { withPlural, FORMS } from '../../../shared/i18n/plural.js';
  * главная причина, по которой комнаты «не находятся», и здесь он
  * технически невозможен.
  */
-export function RoomsView({ room, user, onCreate, onEnterRoom, onOpenMember, onBuildDeck, deckBuilding, toasts }) {
+export function RoomsView({
+  room, user, onCreate, onEnterRoom, onOpenMember, onBuildDeck, deckBuilding, toasts,
+  /** Кто уже в друзьях — чтобы не предлагать то, что есть. */
+  friendIds,
+}) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [recent, setRecent] = useState([]);
@@ -77,6 +81,7 @@ export function RoomsView({ room, user, onCreate, onEnterRoom, onOpenMember, onB
         room={room} user={user} toasts={toasts}
         onEnterRoom={onEnterRoom} onOpenMember={onOpenMember}
         onBuildDeck={onBuildDeck} deckBuilding={deckBuilding}
+        friendIds={friendIds}
       />
     );
   }
@@ -188,7 +193,11 @@ export function RoomsView({ room, user, onCreate, onEnterRoom, onOpenMember, onB
 }
 
 /** Лобби активной комнаты: код, участники, приглашение, старт сессии. */
-function RoomLobby({ room, user, toasts, onEnterRoom, onOpenMember, onBuildDeck, deckBuilding }) {
+function RoomLobby({
+  room, user, toasts, onEnterRoom, onOpenMember, onBuildDeck, deckBuilding,
+  /** Кто уже в друзьях — чтобы не предлагать то, что есть. */
+  friendIds,
+}) {
   const [friendBusy, setFriendBusy] = useState(null);
   const [memberBusy, setMemberBusy] = useState(null);
   /*
@@ -361,7 +370,19 @@ function RoomLobby({ room, user, toasts, onEnterRoom, onOpenMember, onBuildDeck,
                   </span>
                 </button>
                 {member.host && <span className="chip chip--gold">хост</span>}
-                {!isMe && (
+                {/*
+                  * Уже друзьям кнопку не показываем вовсе.
+                  *
+                  * Раньше она предлагалась всем подряд: заявка уходила
+                  * в никуда, а человек считал, что не отправилось,
+                  * и жал ещё раз. Значок вместо кнопки честнее — он
+                  * сообщает состояние и ничего не обещает.
+                  */}
+                {!isMe && (friendIds?.has(member.uid) ? (
+                  <span className="chip chip--ice" title="Уже в друзьях">
+                    <Check size={12} /> в друзьях
+                  </span>
+                ) : (
                   <button
                     type="button"
                     className="btn btn--ghost btn--icon btn--sm"
@@ -372,7 +393,7 @@ function RoomLobby({ room, user, toasts, onEnterRoom, onOpenMember, onBuildDeck,
                   >
                     <UserPlus size={16} />
                   </button>
-                )}
+                ))}
                 {/*
                   * Права хоста над участником. Передача хоста
                   * необратима — после неё кнопки исчезнут, и вернуть

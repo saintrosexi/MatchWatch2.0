@@ -86,17 +86,23 @@ export function SwipeDeck({
     deck.advance(decided.id, action !== 'dislike');
 
     /*
-     * «Уже смотрел» — и сразу спрашиваем, как оно было.
+     * Спрашиваем оценку после «уже смотрел» и после «нравится».
      *
      * Здесь, у карточки, а не списком в «Моё»: человек только что
      * вспомнил фильм, и это единственная секунда, когда оценка стоит
      * ему одного касания. Отложенная просьба «оцените накопленное»
      * стоит уже усилия, и её закрывают не глядя.
      *
+     * У «нравится» вопрос задаётся условно — «уже смотрели?». Свайп
+     * вправо не означает просмотра, и прямое «как вам?» собирало бы
+     * оценки постеров: они попадают в профиль вкуса наравне с честными
+     * и портят его тем сильнее, чем больше их накопится.
+     *
      * Любое следующее решение просьбу снимает: она про тот фильм,
      * который сейчас улетел, и висеть над следующим ей нечего.
      */
-    setRating(action === ACTION.WATCHED && askToRate && onRate ? decided : null);
+    const asks = action === ACTION.WATCHED || action === ACTION.FAVORITE;
+    setRating(asks && askToRate && onRate ? { entry: decided, action } : null);
 
     Promise.resolve()
       .then(() => onDecision(decided, action))
@@ -335,8 +341,9 @@ export function SwipeDeck({
 
           {rating && (
             <RateAsk
-              entry={rating}
-              onRate={(value) => { setRating(null); onRate(rating.title, value); }}
+              entry={rating.entry}
+              action={rating.action}
+              onRate={(value) => { setRating(null); onRate(rating.entry.title, value); }}
               onSkip={() => setRating(null)}
               onNever={onNeverAskToRate && (() => { setRating(null); onNeverAskToRate(); })}
             />
@@ -387,11 +394,22 @@ export function SwipeDeck({
  * и снова у того, кто уже ответил, и продукт выпрашивал бы данные.
  * Возвращается в настройках — раздражение проходит быстрее решения.
  */
-function RateAsk({ entry, onRate, onSkip, onNever }) {
+function RateAsk({ entry, action, onRate, onSkip, onNever }) {
+  /*
+   * «Смотрел» — утверждение, «нравится» — предположение.
+   *
+   * После отметки о просмотре спрашивать «как вам» можно прямо: человек
+   * сам сказал, что видел фильм. После свайпа вправо этого никто
+   * не говорил, и вопрос обязан оставлять выход тому, кто не смотрел.
+   */
+  const watched = action === ACTION.WATCHED;
+
   return (
     <section className="rate-ask" role="dialog" aria-label="Оцените фильм">
       <p className="rate-ask__lead">
-        Смотрели «{entry.title.title}» — как вам?
+        {watched
+          ? `Смотрели «${entry.title.title}» — как вам?`
+          : `Уже смотрели «${entry.title.title}»?`}
       </p>
 
       <StarScale onRate={onRate} size={30} />
@@ -403,7 +421,7 @@ function RateAsk({ entry, onRate, onSkip, onNever }) {
 
       <div className="row gap-2">
         <button type="button" className="btn btn--sm btn--ghost" onClick={onSkip}>
-          Пропустить
+          {watched ? 'Пропустить' : 'Ещё нет'}
         </button>
         {onNever && (
           <button type="button" className="btn btn--sm btn--quiet" onClick={onNever}>

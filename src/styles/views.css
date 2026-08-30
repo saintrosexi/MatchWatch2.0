@@ -1015,9 +1015,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  padding: calc(var(--safe-top) + var(--s-8)) var(--s-5) calc(var(--safe-bottom) + var(--s-5));
+  padding: calc(var(--safe-top) + var(--s-8) + 10px) var(--s-5) calc(var(--safe-bottom) + var(--s-5));
   background: var(--ink-void);
   overflow-y: auto;
+  /*
+   * Вбок объявление не листается.
+   *
+   * `overflow-y: auto` при `overflow-x: visible` по спецификации сам
+   * превращает горизонталь в `auto`, и свечение, которое намеренно
+   * вылезает за края, делало экран прокручиваемым вбок.
+   */
+  overflow-x: clip;
   animation: announce-in var(--dur-base) var(--ease-out) both;
 }
 
@@ -1035,7 +1043,11 @@
 
 .announce__close {
   position: absolute;
-  top: calc(var(--safe-top) + var(--s-4));
+  /*
+   * Ниже безопасной зоны ещё на десять пикселей: в Telegram над ней
+   * лежат собственные кнопки клиента, и крестик прятался под ними.
+   */
+  top: calc(var(--safe-top) + var(--s-4) + 10px);
   right: var(--s-4);
   display: grid;
   place-items: center;
@@ -1170,4 +1182,47 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .announce { animation: none; }
+}
+
+/*
+ * Заливка страницы профиля выбранным постером.
+ *
+ * `fixed`, а не `absolute`: страница длиннее экрана, и подложка,
+ * привязанная к документу, уезжала бы вверх при прокрутке — цвет
+ * страницы обязан оставаться на месте.
+ *
+ * Поверх постера лежит плотная вуаль. Без неё текст попадает то
+ * на светлые, то на тёмные куски картинки и читается через раз;
+ * с ней от постера остаётся ровно то, ради чего он здесь, — оттенок.
+ */
+.profile-wash {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.profile-wash img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Размах больше экрана: размытие иначе оголяет края прозрачностью. */
+  transform: scale(1.25);
+  filter: blur(48px) saturate(1.4);
+  opacity: .5;
+}
+.profile-wash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 50% 0%, transparent, var(--ink-abyss) 78%),
+    color-mix(in srgb, var(--ink-abyss) 72%, transparent);
+}
+
+/* Нуар гасит и подложку — иначе фактура спорит с цветом постера. */
+.profile-page[data-frame='noir'] .profile-wash img { filter: blur(48px) grayscale(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-wash img { transform: none; }
 }
