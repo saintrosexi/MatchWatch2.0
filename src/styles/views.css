@@ -1208,17 +1208,33 @@
   object-fit: cover;
   /* Размах больше экрана: размытие иначе оголяет края прозрачностью. */
   transform: scale(1.25);
-  filter: blur(48px) saturate(1.4);
-  opacity: .5;
+  filter: blur(52px) saturate(1.5);
+  opacity: .62;
 }
+/*
+ * Вуаль РОВНАЯ, а не растушёванная сверху вниз.
+ *
+ * Сначала здесь стоял радиальный градиент, прозрачный у верхней кромки
+ * и глухой к низу. Он гасил заливку ровно там, где она и нужна, —
+ * на длинной части страницы, — а наверху дублировал обложку шапки,
+ * которая и без него видна. Плотность подобрана так, чтобы текст читался
+ * на любой картинке, а оттенок при этом оставался различим.
+ */
 .profile-wash::after {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(120% 80% at 50% 0%, transparent, var(--ink-abyss) 78%),
-    color-mix(in srgb, var(--ink-abyss) 72%, transparent);
+  background: color-mix(in srgb, var(--ink-abyss) 74%, transparent);
 }
+
+/*
+ * Пока открыт профиль, фоновое сияние приложения приглушается.
+ *
+ * Оно коралловое и одинаковое на всех экранах: поверх заливки постером
+ * оно перекрашивало её в один и тот же цвет, и выбор человека переставал
+ * читаться. На остальных экранах сияние остаётся как было.
+ */
+body:has(.profile-wash) .aurora { opacity: .18; }
 
 /* Нуар гасит и подложку — иначе фактура спорит с цветом постера. */
 .profile-page[data-frame='noir'] .profile-wash img { filter: blur(48px) grayscale(1); }
@@ -1226,3 +1242,82 @@
 @media (prefers-reduced-motion: reduce) {
   .profile-wash img { transform: none; }
 }
+
+/*
+ * Полоса управления над своей страницей.
+ *
+ * Стоит НАД профилем, а не внутри него: всё, что ниже, — то же самое,
+ * что видит гость, и подмешивать туда кнопки владельца значило бы
+ * снова показывать человеку не его страницу.
+ */
+.me-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  background: var(--glass-bg);
+}
+.me-bar__premium {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  color: inherit;
+  cursor: pointer;
+}
+.me-bar__title { font-size: var(--t-small); }
+.me-bar__note { font-size: var(--t-micro); color: var(--text-mid); }
+
+/* Значок премиума на чужой странице — кнопка, а не подпись. */
+.premium-badge--link { cursor: pointer; border: 0; }
+
+/*
+ * Два тарифа рядом.
+ *
+ * Список выгод показывает половину правды — ту, за которую платят.
+ * Человеку важнее вторая: что он не потеряет, если не заплатит. Без неё
+ * подписка читается как «продукт урезали».
+ */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--s-3);
+}
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: rgba(255,255,255,.03);
+}
+.plan--premium { border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.plan__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+.plan--premium .plan__title { color: var(--gold); }
+.plan__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--t-small);
+  line-height: 1.4;
+  color: var(--text-mid);
+}
+.plan__list li { display: flex; align-items: flex-start; gap: 8px; }
+.plan--premium .plan__list li { color: var(--text-hi); }
+.plan--premium .plan__list svg { color: var(--mint); flex: 0 0 auto; margin-top: 3px; }

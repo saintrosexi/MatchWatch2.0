@@ -23,7 +23,11 @@ import { withPlural, FORMS } from '../../../shared/i18n/plural.js';
  * Первым делом — пересечение с тем, кто смотрит. Чужой профиль
  * открывают не с вопросом «кто это вообще», а с вопросом «а мы совпадём».
  */
-export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEditShowcase, toasts }) {
+export function PublicProfileView({
+  username, userId, onBack, onOpenTitle, onEditShowcase, toasts,
+  /** Нажатие на значок премиума открывает витрину подписки. */
+  onOpenPremium,
+}) {
   const [state, setState] = useState({ loading: true });
 
   useEffect(() => {
@@ -41,11 +45,18 @@ export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEdi
     return <ErrorState error={{ text: 'Не удалось загрузить профиль', retryable: true }} module="social.profile" />;
   }
 
-  const back = (
+  /*
+   * Кнопка появляется, только если возвращаться есть куда.
+   *
+   * На своей же странице (её открывает вкладка «Я») `onBack` не передан,
+   * и «Назад» вело бы в никуда — а выглядело так, будто человек куда-то
+   * провалился и должен выбираться.
+   */
+  const back = onBack ? (
     <button type="button" className="btn btn--quiet btn--sm" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
       <ArrowLeft size={16} /> Назад
     </button>
-  );
+  ) : null;
 
   if (!state.person) {
     return (
@@ -118,9 +129,20 @@ export function PublicProfileView({ username, userId, onBack, onOpenTitle, onEdi
             * Значок — половина смысла платной косметики: её ценность
             * в том, что её видно другим, а не владельцу.
             */}
-          {person.premium && (
+          {/*
+            * Значок нажимается и открывает витрину подписки.
+            *
+            * Человек, увидевший корону у друга, спрашивает «а что это?» —
+            * и это лучший момент рассказать: интерес уже возник сам,
+            * без нашей рекламы.
+            */}
+          {person.premium && (onOpenPremium ? (
+            <button type="button" className="premium-badge premium-badge--link" onClick={onOpenPremium}>
+              <Crown size={11} weight="fill" /> Премиум
+            </button>
+          ) : (
             <span className="premium-badge"><Crown size={11} weight="fill" /> Премиум</span>
-          )}
+          ))}
           {person.bio && <p className="profile-hero__bio">{person.bio}</p>}
 
           {hero?.title && (

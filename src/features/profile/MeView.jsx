@@ -15,7 +15,9 @@ const TABS = [
   { key: 'friends', label: 'Друзья' },
 ];
 
-export function MeView({ initialTab = 'profile', onOpenPublicProfile, showTabs = true, ...rest }) {
+export function MeView({
+  initialTab = 'profile', onOpenPublicProfile, showTabs = true, ...rest
+}) {
   const [tab, setTab] = useState(initialTab);
 
   return (

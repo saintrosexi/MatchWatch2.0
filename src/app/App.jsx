@@ -49,6 +49,8 @@ const ShowcaseEditor = lazy(retryChunk(() => import('../features/profile/Showcas
   .then((m) => ({ default: m.ShowcaseEditor })), 'ShowcaseEditor'));
 const WhatsNewView = lazy(retryChunk(() => import('../features/news/WhatsNewView.jsx')
   .then((m) => ({ default: m.WhatsNewView })), 'WhatsNewView'));
+const SettingsView = lazy(retryChunk(() => import('../features/profile/SettingsView.jsx')
+  .then((m) => ({ default: m.SettingsView })), 'SettingsView'));
 const PublicProfileView = lazy(retryChunk(() => import('../features/profile/PublicProfileView.jsx')
   .then((m) => ({ default: m.PublicProfileView })), 'PublicProfileView'));
 const DashboardView = lazy(retryChunk(() => import('../features/profile/DashboardView.jsx')
@@ -96,6 +98,8 @@ const VIEW = {
   MINE: 'mine',
   /** «Я» — профиль и друзья под одной вкладкой. */
   ME: 'me',
+  /** Настройки профиля — всё служебное за одной дверью. */
+  SETTINGS: 'settings',
   PUBLIC_PROFILE: 'public-profile',
   /** Что нового — история обновлений продукта. */
   NEWS: 'news',
@@ -169,20 +173,6 @@ export default function App() {
    * запуску. Лишний `useState` заставлял бы перерисовывать всё
    * приложение ради значения, которого никто не читает.
    */
-  useEffect(() => {
-    if (!user?.uid) { setFriendIds(new Set()); return; }
-    let alive = true;
-    loadFriends()
-      .then((list) => {
-        if (!alive) return;
-        setFriendIds(new Set(list
-          .filter((f) => f.status === 'accepted')
-          .map((f) => f.id)));
-      })
-      .catch(() => { /* список друзей — украшение кнопки, не условие работы */ });
-    return () => { alive = false; };
-  }, [user?.uid]);
-
   const markNewsSeen = useCallback((item) => {
     if (!item) return;
     const seen = loadLocal(STORAGE_KEYS.NEWS_SEEN, []);
@@ -223,6 +213,20 @@ export default function App() {
    * переводятся в два касания.
    */
   const premium = usePremium({ uid: user?.uid, enabled: Boolean(user?.uid) });
+
+  useEffect(() => {
+    if (!user?.uid) { setFriendIds(new Set()); return; }
+    let alive = true;
+    loadFriends()
+      .then((list) => {
+        if (!alive) return;
+        setFriendIds(new Set(list
+          .filter((f) => f.status === 'accepted')
+          .map((f) => f.id)));
+      })
+      .catch(() => { /* список друзей — украшение кнопки, не условие работы */ });
+    return () => { alive = false; };
+  }, [user?.uid]);
   // Стабильная ссылка: иначе колбэки комнаты пересоздаются на каждый рендер.
   const roomUser = useMemo(
     () => user ?? { uid: 'anonymous', displayName: 'Гость', photoURL: null },
@@ -1261,6 +1265,7 @@ const TITLES = {
   [VIEW.MINE]: 'Моё',
   [VIEW.ME]: 'Я',
   [VIEW.PUBLIC_PROFILE]: 'Профиль',
+  [VIEW.SETTINGS]: 'Настройки',
   [VIEW.DASHBOARD]: 'Метрики',
 };
 
@@ -1330,6 +1335,7 @@ function renderView(ctx) {
     case VIEW.PUBLIC_PROFILE:
       return (
         <PublicProfileView
+          onOpenPremium={() => setPremiumOpen(true)}
           username={typeof publicProfile === 'string' ? publicProfile : null}
           userId={typeof publicProfile === 'object' ? publicProfile?.uid : null}
           toasts={toasts}
@@ -1347,22 +1353,31 @@ function renderView(ctx) {
           showTabs={!desktopShell}
           user={sessionUser}
           profile={userState?.profile}
-          taste={taste}
-          access={userState?.access}
-          matches={userState?.matches ?? {}}
-          favorites={userState?.favorites ?? {}}
-          ratings={userState?.ratings ?? {}}
           onOpenTitle={openDetails}
           onEditShowcase={() => setShowcaseOpen(true)}
-          prefs={prefs}
-          onPrefsChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))}
-          onLogout={auth.logout}
-          onOpenDashboard={() => setView(VIEW.DASHBOARD)}
-          onOpenNews={() => setView(VIEW.NEWS)}
-          onEditProfile={() => setEditorOpen(true)}
+          onOpenSettings={() => setView(VIEW.SETTINGS)}
           premium={premium}
           onOpenPremium={() => setPremiumOpen(true)}
           onOpenPublicProfile={(username) => { setPublicProfile(username); setView(VIEW.PUBLIC_PROFILE); }}
+          toasts={toasts}
+        />
+      );
+
+    case VIEW.SETTINGS:
+      return (
+        <SettingsView
+          user={sessionUser}
+          profile={userState?.profile}
+          access={userState?.access}
+          prefs={prefs}
+          premium={premium}
+          onBack={() => setView(VIEW.ME)}
+          onEditProfile={() => setEditorOpen(true)}
+          onEditShowcase={() => setShowcaseOpen(true)}
+          onOpenPremium={() => setPremiumOpen(true)}
+          onOpenDashboard={() => setView(VIEW.DASHBOARD)}
+          onPrefsChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))}
+          onLogout={auth.logout}
           auth={auth}
           toasts={toasts}
         />
