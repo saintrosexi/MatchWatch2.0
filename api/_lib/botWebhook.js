@@ -19,7 +19,7 @@ import {
   sendMessage, openAppButton, answerInlineQuery, appLink, linkButton, miniAppUrl,
   callBot, navKeyboard, TEXTS,
 } from './botApi.js';
-import { DESTINATION } from '../../shared/model/startParam.js';
+import { DESTINATION, profileStartParam } from '../../shared/model/startParam.js';
 import { logError, logMetric } from './telemetry.js';
 import { creditPayment } from './billing.js';
 import { BIZ, LEVEL, METRIC, MODULE } from '../../shared/telemetry/events.js';
@@ -374,6 +374,8 @@ async function onInlineQuery(query) {
   } else if (kind === 'room') {
     const code = /^\d{5}$/.test(argument) ? argument : null;
     if (code) results = roomResult(code);
+  } else if (kind === 'profile' && argument) {
+    results = profileResult(argument);
   }
 
   // Пустой запрос и всё непонятное сводятся к карточке приложения:
@@ -406,6 +408,34 @@ async function matchResult(titleId) {
     caption: TEXTS.inline.match(title.title, title.year),
     parse_mode: 'HTML',
     ...(linkButton('Открыть MatchWatch', link) ? { reply_markup: linkButton('Открыть MatchWatch', link) } : {}),
+  }];
+}
+
+/**
+ * Карточка профиля для отправки в чат.
+ *
+ * `article`, а не `photo`: аватар есть не у всех, и половина отправок
+ * молча превращалась бы в пустоту. Текст с ником работает всегда.
+ */
+export function profileResult(rawUsername) {
+  const username = String(rawUsername).replace(/^@/, '').trim().slice(0, 32);
+  if (!/^[a-z0-9_]{3,32}$/i.test(username)) return [];
+
+  const link = appLink(profileStartParam(username));
+
+  return [{
+    type: 'article',
+    id: `profile:${username}`.slice(0, 64),
+    title: `Профиль @${username}`,
+    description: 'Показать, что вы смотрите',
+    input_message_content: {
+      message_text: TEXTS.inline.profile(username),
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+    },
+    ...(linkButton('Открыть профиль', link)
+      ? { reply_markup: linkButton('Открыть профиль', link) }
+      : {}),
   }];
 }
 

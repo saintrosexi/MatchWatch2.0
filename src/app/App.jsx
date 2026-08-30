@@ -81,9 +81,10 @@ import { loadLocal, saveLocal, STORAGE_KEYS } from '../lib/storage.js';
 import { subscribeNetwork } from '../lib/network.js';
 import { startOutbox, subscribeOutbox, flushOutbox } from '../lib/outbox.js';
 import {
-  setHapticsEnabled, getStartRoomCode, getStartDestination, enableClosingConfirmation, haptic,
+  setHapticsEnabled, getStartRoomCode, getStartDestination, getStartParamRaw,
+  enableClosingConfirmation, haptic,
 } from '../lib/telegram.js';
-import { DESTINATION } from '../../shared/model/startParam.js';
+import { DESTINATION, parseStartParam } from '../../shared/model/startParam.js';
 import { setSoundEnabled } from '../lib/sound.js';
 import { trackError, trackMetric, breadcrumb } from '../lib/telemetry.js';
 import { LEVEL, METRIC, MODULE } from '../../shared/telemetry/events.js';
@@ -395,6 +396,25 @@ export default function App() {
 
     if (to === DESTINATION.PREMIUM) setPremiumOpen(true);
     else setView(to);
+  }, [auth.isReady, user?.uid]);
+
+  /*
+   * ── Ссылка на чужой профиль из чата ──
+   *
+   * Отдельно от разделов: здесь нужно ещё и подставить, ЧЕЙ профиль,
+   * а не просто открыть экран. Разбор общий с ботом, поэтому ник,
+   * который бот положил в карточку, доезжает сюда без потерь.
+   */
+  const profileLinkHandled = useRef(false);
+  useEffect(() => {
+    if (profileLinkHandled.current || !auth.isReady || !user?.uid) return;
+    const parsed = parseStartParam(getStartParamRaw());
+    if (parsed?.kind !== 'profile') return;
+
+    profileLinkHandled.current = true;
+    breadcrumb(`ссылка на профиль @${parsed.username}`);
+    setPublicProfile(parsed.username);
+    setView(VIEW.PUBLIC_PROFILE);
   }, [auth.isReady, user?.uid]);
 
   /* ── Deep-link в комнату: ?room=CODE или Telegram start_param ── */

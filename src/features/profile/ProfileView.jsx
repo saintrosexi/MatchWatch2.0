@@ -1,5 +1,6 @@
-import { Crown, Lock, Settings, Sparkles, Users } from '../../ui/icons.js';
+import { Crown, Lock, Settings, Share2, Sparkles, Users } from '../../ui/icons.js';
 import { PublicProfileView } from './PublicProfileView.jsx';
+import { shareViaInlineQuery, shareToTelegram, profileLink } from '../../lib/telegram.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
@@ -25,6 +26,23 @@ export function ProfileView({
 }) {
   const { price, promo } = PREMIUM_CONFIG;
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
+  const username = profile?.username;
+
+  const share = () => {
+    if (!username) {
+      toasts?.error?.('Сначала задайте ник — по нему вас и найдут');
+      return;
+    }
+    /* Инлайн-режим — родной выбор чата. Не вышло — обычный шеринг ссылки. */
+    if (shareViaInlineQuery(`profile ${username}`, ['users', 'groups'])) return;
+
+    const link = profileLink(username);
+    if (link && shareToTelegram({ url: link, text: 'Мой профиль в MatchWatch' })) return;
+    if (link) {
+      navigator.clipboard?.writeText(link);
+      toasts?.success?.('Ссылка на профиль скопирована');
+    }
+  };
 
   return (
     <div className="stack gap-4">
@@ -71,6 +89,17 @@ export function ProfileView({
               {canShowcase ? <Sparkles size={16} /> : <Lock size={14} />} Витрина
             </button>
           )}
+          {/*
+            * Поделиться профилем — через инлайн-режим бота.
+            *
+            * Открывается родной выбор чата Telegram: список контактов
+            * остаётся у клиента, к нам он не попадает и попасть не может —
+            * контакты приложениям не выдаются вовсе. Человек выбирает
+            * сам, а бот кладёт в чат карточку со ссылкой.
+            */}
+          <button type="button" className="btn btn--ghost btn--sm" onClick={share}>
+            <Share2 size={16} /> Поделиться
+          </button>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onOpenSettings}>
             <Settings size={16} /> Настройки
           </button>

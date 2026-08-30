@@ -15,7 +15,7 @@
 import { trackBusiness, trackError } from './telemetry.js';
 import { BIZ, LEVEL, MODULE } from '../../shared/telemetry/events.js';
 import { normalizeRoomCode } from '../../shared/model/roomCode.js';
-import { parseStartParam } from '../../shared/model/startParam.js';
+import { parseStartParam, profileStartParam } from '../../shared/model/startParam.js';
 import { ENV } from './env.js';
 
 const wa = () => globalThis.Telegram?.WebApp ?? null;
@@ -108,6 +108,9 @@ export const getInitData = () => wa()?.initData ?? null;
 export const getTelegramUser = () => wa()?.initDataUnsafe?.user ?? null;
 
 /** Код комнаты из deep-link `t.me/<bot>/<app>?startapp=CODE`. */
+/** Сырое значение `start_param` — для разбора на стороне приложения. */
+export const getStartParamRaw = () => rawStartParam();
+
 const rawStartParam = () => wa()?.initDataUnsafe?.start_param
   ?? new URLSearchParams(globalThis.location?.search ?? '').get('tgWebAppStartParam');
 
@@ -179,6 +182,23 @@ export function setMainButton({ text, onClick, color = '#FF4D5E', textColor = '#
 }
 
 /* ── Шаринг ────────────────────────────────────────────────────── */
+
+/**
+ * Прямая ссылка на профиль.
+ *
+ * Тот же `startapp`, что и у приглашения в комнату, но с префиксом:
+ * ник неотличим от названия раздела, и человек с ником `rooms` иначе
+ * уводил бы к себе всех, кто нажал кнопку бота.
+ */
+export function profileLink(username) {
+  const clean = String(username ?? '').replace(/^@/, '').trim();
+  if (!clean) return null;
+  if (ENV.telegramBot) {
+    return `https://t.me/${ENV.telegramBot}/${ENV.telegramApp}?startapp=${profileStartParam(clean)}`;
+  }
+  const url = new URL(globalThis.location?.href ?? 'https://matchwatch.app');
+  return `${url.origin}/@${clean}`;
+}
 
 /** Прямая ссылка-приглашение в комнату. */
 export function roomInviteLink(code) {

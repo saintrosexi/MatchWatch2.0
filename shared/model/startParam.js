@@ -33,8 +33,27 @@ export const DESTINATION = Object.freeze({
 const KNOWN = new Set(Object.values(DESTINATION));
 
 /**
+ * Префикс профиля.
+ *
+ * Ник нельзя отличить от названия раздела без метки: человек может
+ * зарегистрировать себе `rooms` или `deck` и увести всех, кто нажал
+ * кнопку бота, на свою страницу. Префикс снимает эту двусмысленность
+ * раз и навсегда.
+ *
+ * `u_`, а не `@`: Telegram обрезает `start_param` до букв, цифр,
+ * дефиса и подчёркивания — собачка до нас просто не доедет.
+ */
+const PROFILE_PREFIX = 'u_';
+
+/** Собирает `start_param` для ссылки на профиль. */
+export const profileStartParam = (username) => `${PROFILE_PREFIX}${String(username ?? '').trim()}`;
+
+/**
  * @param {string|null|undefined} raw значение `start_param`
- * @returns {{kind: 'room', code: string} | {kind: 'view', to: string} | null}
+ * @returns {{kind: 'room', code: string}
+ *   | {kind: 'view', to: string}
+ *   | {kind: 'profile', username: string}
+ *   | null}
  */
 export function parseStartParam(raw) {
   if (raw === null || raw === undefined) return null;
@@ -43,6 +62,12 @@ export function parseStartParam(raw) {
   if (code) return { kind: 'room', code };
 
   const value = String(raw).trim().toLowerCase();
+
+  if (value.startsWith(PROFILE_PREFIX)) {
+    const username = value.slice(PROFILE_PREFIX.length);
+    return username ? { kind: 'profile', username } : null;
+  }
+
   if (KNOWN.has(value)) return { kind: 'view', to: value };
 
   return null;
