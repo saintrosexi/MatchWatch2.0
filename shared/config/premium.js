@@ -125,6 +125,21 @@ export const PREMIUM_CONFIG = {
    * и есть продукт.
    */
   profile: {
+    /**
+     * Витрина целиком — платная.
+     *
+     * Раньше платными были только четыре цвета и фактуры, а сама
+     * настройка оставалась общей. Граница выходила невнятной: человек
+     * заходил в редактор, видел половину запертого и не понимал,
+     * за что именно платит. Теперь просто: оформление профиля — это
+     * премиум, и это единственное, что премиум отнимает.
+     *
+     * Что видит бесплатный пользователь: страницу, собранную по
+     * умолчанию, — аватар, ник, статистику, любимое, темы. Она не пустая
+     * и не урезанная, просто её нельзя настроить.
+     */
+    showcase: 'premium',
+
     /** Сколько фильмов можно закрепить в визитке. */
     pinLimit: { free: 6, premium: 12 },
 
@@ -154,7 +169,7 @@ export const PREMIUM_CONFIG = {
   benefits: [
     'Совместные комнаты без ограничений',
     'Более активное использование ИИ в ваших рекомендациях',
-    'Оформление профиля: фактуры и закрытые цвета',
+    'Оформление профиля: витрина, цвета и фактуры',
     'Двенадцать фильмов в визитке вместо шести',
     'Значок премиума на публичной странице',
     'Ранний доступ к импорту из Кинопоиска',
@@ -171,6 +186,12 @@ export function accentAllowed(key, { premium = false, config = PREMIUM_CONFIG } 
 export function frameAllowed(key, { premium = false, config = PREMIUM_CONFIG } = {}) {
   if (config.grantAllUsers || premium) return true;
   return !config.profile.frames.premium.includes(key);
+}
+
+/** Доступна ли настройка витрины. */
+export function showcaseAllowed({ premium = false, config = PREMIUM_CONFIG } = {}) {
+  if (config.profile.showcase !== 'premium') return true;
+  return Boolean(config.grantAllUsers || premium);
 }
 
 /** Сколько фильмов можно закрепить прямо сейчас. */

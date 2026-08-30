@@ -1,6 +1,6 @@
-import { Crown, Settings, Sparkles, Users } from '../../ui/icons.js';
+import { Crown, Lock, Settings, Sparkles, Users } from '../../ui/icons.js';
 import { PublicProfileView } from './PublicProfileView.jsx';
-import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
+import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
  * «Я» — та же страница, которую видят все остальные.
@@ -24,6 +24,7 @@ export function ProfileView({
   onOpenPremium, onOpenSettings, onOpenFriends, onOpenTitle, onEditShowcase,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
+  const canShowcase = showcaseAllowed({ premium: premium?.premium });
 
   return (
     <div className="stack gap-4">
@@ -55,9 +56,19 @@ export function ProfileView({
               <Users size={16} /> Друзья
             </button>
           )}
+          {/*
+            * Без подписки кнопка ведёт не в редактор, а в витрину
+            * подписки. Показывать редактор с запертой половиной хуже,
+            * чем не показывать вовсе: человек тратит время, чтобы
+            * выяснить, что ему нельзя.
+            */}
           {onEditShowcase && (
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onEditShowcase}>
-              <Sparkles size={16} /> Витрина
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={canShowcase ? onEditShowcase : onOpenPremium}
+            >
+              {canShowcase ? <Sparkles size={16} /> : <Lock size={14} />} Витрина
             </button>
           )}
           <button type="button" className="btn btn--ghost btn--sm" onClick={onOpenSettings}>
@@ -75,7 +86,7 @@ export function ProfileView({
       <PublicProfileView
         userId={user?.uid}
         onOpenTitle={onOpenTitle}
-        onEditShowcase={onEditShowcase}
+        onEditShowcase={canShowcase ? onEditShowcase : onOpenPremium}
         onOpenPremium={onOpenPremium}
         toasts={toasts}
         key={profile?.username ?? user?.uid}

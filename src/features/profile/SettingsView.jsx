@@ -1,10 +1,10 @@
 import {
   ArrowLeft, BarChart3, Check, Crown, Download, LogOut, Pencil, Sparkles,
-  Vibrate, Volume2, VolumeX, Star,
+  Vibrate, Volume2, VolumeX, Star, Lock,
 } from '../../ui/icons.js';
 import { StatusStrip } from '../../ui/States.jsx';
 import { TelegramLinkCard } from './TelegramLinkCard.jsx';
-import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
+import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
  * Настройки профиля — всё служебное за одной дверью.
@@ -27,6 +27,7 @@ export function SettingsView({
   onPrefsChange, onLogout, auth, toasts,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
+  const canShowcase = showcaseAllowed({ premium: premium?.premium });
 
   return (
     <div className="view">
@@ -58,12 +59,15 @@ export function SettingsView({
             hint={profile?.username ? `@${profile.username}` : 'ник не задан'}
             onClick={onEditProfile}
           />
+          {/* Без подписки ведёт в витрину подписки, а не в редактор. */}
           {onEditShowcase && (
             <SettingLink
-              icon={Sparkles}
+              icon={canShowcase ? Sparkles : Lock}
               label="Витрина"
-              hint="Что из отмеченного показывать другим: закреплённое, фильм про себя, цвет и фактура"
-              onClick={onEditShowcase}
+              hint={canShowcase
+                ? 'Что из отмеченного показывать другим: закреплённое, фильм про себя, цвет и фактура'
+                : 'Настройка страницы — в премиуме. Сейчас она собирается сама.'}
+              onClick={canShowcase ? onEditShowcase : onOpenPremium}
             />
           )}
         </div>

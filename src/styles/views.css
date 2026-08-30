@@ -548,34 +548,69 @@
 .profile-page[data-accent='moss']   { --accent: #8fbf52; }
 
 /*
- * Фактура карточки профиля — то, за что берут деньги.
+ * Фактура страницы — то, за что берут деньги.
  *
- * Все четыре работают через акцент, а не поверх него: человек выбирает
- * цвет и фактуру независимо, и любая пара обязана выглядеть намеренной.
- * Поэтому ни одна не задаёт собственный оттенок.
+ * Первая версия не работала, и это стоит записать. Все четыре эффекта
+ * висели на `.profile-hero__cover`, внутри которого лежит `<img>`
+ * во всю его высоту. Фон и внутренняя тень рисуются ПОД содержимым —
+ * картинка закрывала их целиком; перфорация сидела в области, уведённой
+ * за верхнюю кромку экрана. Из четырёх фактур работала одна — «нуар»,
+ * потому что `filter` применяется к элементу вместе с детьми.
+ *
+ * Теперь эффект накладывается на страницу целиком, поверх заливки
+ * постером и под содержимым. Разница видна, не приглядываясь, — иначе
+ * платная косметика бессмысленна: её ценность в том, что её замечают.
  */
-.profile-page[data-frame='glow'] .profile-hero__cover {
-  box-shadow: inset 0 -80px 120px -60px var(--accent);
-}
-.profile-page[data-frame='gradient'] .profile-hero__cover {
-  background-image: linear-gradient(160deg,
-    color-mix(in srgb, var(--accent) 45%, transparent), transparent 70%);
-}
-/* «Плёнка»: перфорация по краю кадра, самый киношный из четырёх. */
-.profile-page[data-frame='film'] .profile-hero__cover::after {
+.profile-page::before {
   content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 10px;
-  background-image: repeating-linear-gradient(to right,
-    color-mix(in srgb, var(--accent) 70%, transparent) 0 6px, transparent 6px 14px);
-  opacity: 0.65;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
 }
-.profile-page[data-frame='noir'] .profile-hero__cover {
-  filter: grayscale(1) contrast(1.15);
+
+/* Свечение: акцент разливается из-за краёв экрана внутрь. */
+.profile-page[data-frame='glow']::before {
+  background:
+    radial-gradient(80% 55% at 50% 0%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 70%),
+    radial-gradient(90% 60% at 50% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 72%);
 }
-.profile-page[data-frame='noir'] .profile-hero__avatar {
-  border-color: var(--text-mid);
+
+/* Градиент: постер вверху, чистый акцент внизу. */
+.profile-page[data-frame='gradient']::before {
+  background: linear-gradient(180deg,
+    transparent 18%,
+    color-mix(in srgb, var(--accent) 26%, transparent) 68%,
+    color-mix(in srgb, var(--accent) 52%, transparent) 100%);
+}
+
+/*
+ * Плёнка: зерно по всему экрану и перфорация по боковым кромкам.
+ *
+ * Зерно — SVG-шум в data-URI: он весит несколько сотен байт и не требует
+ * ни файла, ни сети. Перфорация по бокам, а не сверху: сверху её закроет
+ * шапка Telegram, а боковые кромки видны на любом экране.
+ */
+.profile-page[data-frame='film']::before {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(to bottom,
+      color-mix(in srgb, var(--accent) 55%, transparent) 0 14px, transparent 14px 34px),
+    repeating-linear-gradient(to bottom,
+      color-mix(in srgb, var(--accent) 55%, transparent) 0 14px, transparent 14px 34px);
+  background-size: 140px 140px, 7px 100%, 7px 100%;
+  background-position: 0 0, left top, right top;
+  background-repeat: repeat, repeat-y, repeat-y;
+  opacity: .5;
+  mix-blend-mode: screen;
+}
+
+/* Нуар: обесцвечивается всё — и заливка, и обложка, и рамка аватара. */
+.profile-page[data-frame='noir'] .profile-wash img { filter: blur(52px) grayscale(1); }
+.profile-page[data-frame='noir'] .profile-hero__cover { filter: grayscale(1) contrast(1.12); }
+.profile-page[data-frame='noir'] .profile-hero__avatar { border-color: var(--text-mid); }
+.profile-page[data-frame='noir']::before {
+  background: radial-gradient(90% 70% at 50% 30%, transparent, rgba(0,0,0,.55) 100%);
 }
 
 .profile-hero {
@@ -1235,9 +1270,6 @@
  * читаться. На остальных экранах сияние остаётся как было.
  */
 body:has(.profile-wash) .aurora { opacity: .18; }
-
-/* Нуар гасит и подложку — иначе фактура спорит с цветом постера. */
-.profile-page[data-frame='noir'] .profile-wash img { filter: blur(48px) grayscale(1); }
 
 @media (prefers-reduced-motion: reduce) {
   .profile-wash img { transform: none; }
