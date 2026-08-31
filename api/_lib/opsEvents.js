@@ -18,7 +18,13 @@ const KNOWN_BIZ = new Set(Object.values(BIZ));
 const KNOWN_METRICS = new Set(Object.values(METRIC));
 const KNOWN_LEVELS = new Set(Object.values(LEVEL));
 
-export const eventsHandler = withHandler({ methods: ['POST'], module: MODULE.OPS }, async ({ body, req }) => {
+export const eventsHandler = withHandler({
+  methods: ['POST'],
+  module: MODULE.OPS,
+  /* Единственная задача эндпоинта — записать. Отвечать «принято»
+     до того, как запись легла, здесь означает соврать. */
+  awaitTelemetry: true,
+}, async ({ body, req }) => {
   const events = Array.isArray(body?.events) ? body.events.slice(0, MAX_BATCH) : null;
   if (!events?.length) throw badRequest('events_required', 'Передайте массив events');
 
