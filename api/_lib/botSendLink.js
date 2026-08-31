@@ -23,13 +23,37 @@
 
 import { withHandler, badRequest } from './http.js';
 import { validateInitData } from './telegram.js';
-import { sendMessage } from './botApi.js';
+import { esc, openAppButton, sendMessage } from './botApi.js';
+import { normalizeRoomCode } from '../../shared/model/roomCode.js';
 import { sbSelect } from './supabaseAdmin.js';
 import { PREMIUM_CONFIG } from '../../shared/config/premium.js';
 import { MODULE } from '../../shared/telemetry/events.js';
 
 /** Что боту разрешено присылать. Адреса — только отсюда. */
 const LINKS = {
+  /**
+   * Приглашение в комнату — пересылаемой карточкой.
+   *
+   * Родной выбор чата (`switchInlineQuery`) доступен не всегда: Telegram
+   * отказывает, когда Mini App открыт не из чата, а по прямой ссылке.
+   * Раньше в этом случае приглашение уходило ссылкой, закрывавшей
+   * приложение, — человек нажимал «Пригласить» и терял и комнату,
+   * и ссылку.
+   *
+   * Здесь бот присылает карточку самому приглашающему, и тот пересылает
+   * её кому хочет обычным способом. На одно касание больше, зато
+   * приложение не закрывается, а у получателя оказывается не голый
+   * адрес, а сообщение с кодом и кнопкой входа.
+   */
+  room_invite: ({ code }) => ({
+    text: `🍿 <b>Комната ${esc(code)}</b>\n\n`
+      + 'Заходите — выберем кино вместе. Свайпаете каждый со своего '
+      + 'телефона, а приложение покажет, на чём вы сошлись.\n\n'
+      + '<i>Перешлите это сообщение тому, кого зовёте.</i>',
+    keyboard: openAppButton(`Войти в комнату ${code}`, { startParam: code }),
+    preview: false,
+  }),
+
   stars_shop: () => ({
     text: `⭐ <b>Где купить Telegram Stars</b>\n\n${PREMIUM_CONFIG.starsShop.url}\n\n`
       + `<i>${PREMIUM_CONFIG.starsShop.note}</i>`,
@@ -52,6 +76,17 @@ export const sendLinkHandler = withHandler({
   const { telegramId } = validateInitData(body?.initData);
 
   /*
+   * Код комнаты приходит от клиента, поэтому проверяется дважды: формат
+   * здесь, а принадлежность к живой комнате — ниже. Без второй проверки
+   * эндпоинт рассылал бы приглашения в чужие и несуществующие комнаты
+   * от имени нашего бота.
+   */
+  const code = body?.kind === 'room_invite' ? normalizeRoomCode(body?.code) : null;
+  if (body?.kind === 'room_invite' && !code) {
+    throw badRequest('room_code_required', 'Нужен код комнаты');
+  }
+
+  /*
    * Право писать проверяем ДО отправки и отвечаем причиной, а не общей
    * ошибкой: интерфейсу нужно различать «не разрешал» и «сломалось».
    * В первом случае человеку можно предложить разрешить прямо сейчас,
@@ -68,8 +103,15 @@ export const sendLinkHandler = withHandler({
   const chatId = rows?.[0]?.chat_id;
   if (!chatId) return { sent: false, reason: 'no_chat' };
 
-  const { text, preview } = build();
-  const result = await sendMessage(chatId, text, { preview });
+  if (code) {
+    const rooms = await sbSelect('rooms', {
+      select: 'code', code: `eq.${code}`, status: 'eq.open', limit: 1,
+    });
+    if (!rooms?.length) return { sent: false, reason: 'room_not_found' };
+  }
+
+  const { text, keyboard, preview } = build({ code });
+  const result = await sendMessage(chatId, text, { keyboard, preview });
 
   if (!result?.ok) {
     return { sent: false, reason: 'send_failed', description: result?.description ?? null };

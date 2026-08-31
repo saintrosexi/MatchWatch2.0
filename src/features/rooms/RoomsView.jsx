@@ -11,7 +11,10 @@ import { InviteFriends } from './InviteFriends.jsx';
 import { loadRecentRooms } from '../../engine/userData.js';
 import { normalizeRoomCode, ROOM_CODE_LENGTH } from '../../../shared/model/roomCode.js';
 import { JOIN_SOURCE } from '../../engine/rooms.js';
-import { roomInviteLink, shareToTelegram, shareViaInlineQuery, haptic } from '../../lib/telegram.js';
+import {
+  getInitData, haptic, requestWriteAccess, roomInviteLink, shareViaInlineQuery,
+} from '../../lib/telegram.js';
+import { api } from '../../lib/api.js';
 import { trackMetric } from '../../lib/telemetry.js';
 import { METRIC } from '../../../shared/telemetry/events.js';
 import { sfx } from '../../lib/sound.js';
@@ -236,18 +239,72 @@ function RoomLobby({
   const share = () => {
     room.trackInvite();
     haptic('light');
+
+    /* Родной выбор чата поверх приложения — как задумано. */
     if (shareViaInlineQuery(`room ${room.code}`, ['users', 'groups'])) return;
-    if (shareToTelegram({ url: invite, text: `Заходи в комнату ${room.code} — выберем кино вместе 🍿` })) return;
-    navigator.share?.({ title: 'MatchWatch', text: `Код комнаты: ${room.code}`, url: invite })
-      ?.catch(() => copy());
+
+    /*
+     * Инлайн-режим не сработал.
+     *
+     * Раньше отсюда открывалась ссылка через `openTelegramLink`, и она
+     * ЗАКРЫВАЕТ Mini App: человек жал «пригласить» и оказывался
+     * в Telegram неизвестно где, без комнаты и без ссылки. Приглашение,
+     * которое выбрасывает из приложения, хуже, чем приглашение
+     * из буфера обмена.
+     *
+     * Поэтому дальше мы приложение не закрываем. Системное «поделиться»
+     * (если клиент его даёт) рисуется поверх, а копия ссылки в худшем
+     * случае оставляет человека там же, где он был, и с адресом
+     * на руках. Друзей, которые уже в приложении, звать вообще незачем
+     * через чат — список с кнопкой «Позвать» стоит ниже на этом же
+     * экране.
+     */
+    /*
+     * Просим бота прислать пересылаемую карточку.
+     *
+     * На одно касание больше родного выбора чата, зато работает всегда
+     * и не закрывает приложение: человек пересылает готовое сообщение
+     * с кодом и кнопкой входа, а не голый адрес.
+     */
+    sendInviteViaBot();
   };
 
-  const copy = async () => {
+  const sendInviteViaBot = async () => {
+    const initData = getInitData();
+    if (!initData) { copy({ explain: true }); return; }
+
+    try {
+      let result = await api.sendLink('room_invite', initData, { code: room.code });
+
+      /* Боту ещё не разрешали писать — спрашиваем прямо здесь. */
+      if (result?.reason === 'no_chat' && await requestWriteAccess()) {
+        await api.allowNotifications(initData);
+        result = await api.sendLink('room_invite', initData, { code: room.code });
+      }
+
+      if (result?.sent) {
+        toasts.success('Приглашение в Telegram — перешлите его другу');
+        return;
+      }
+    } catch {
+      /* Разберёмся ниже: копия остаётся рабочим путём при любом отказе. */
+    }
+
+    copy({ explain: true });
+  };
+
+  /*
+   * `explain` — когда копия не была выбором человека, а осталась
+   * единственным путём. Без объяснения нажатие «Пригласить», после
+   * которого просто загорелось «скопировано», выглядит как сбой.
+   */
+  const copy = async ({ explain = false } = {}) => {
     try {
       await navigator.clipboard.writeText(invite);
       setCopied(true);
       trackMetric(METRIC.ROOM_INVITE_SENT, { room: room.code });
       sfx.tick();
+      if (explain) toasts.push('Telegram не дал выбрать чат — ссылка скопирована, вставьте её другу');
     } catch {
       toasts.error('Не удалось скопировать. Продиктуйте код: ' + room.code);
     }

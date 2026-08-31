@@ -171,8 +171,8 @@ export const api = {
    * Передаём ВИД ссылки, а не адрес: адрес живёт на сервере, иначе
    * эндпоинт стал бы ретранслятором чужих ссылок от имени нашего бота.
    */
-  sendLink: (kind, initData) =>
-    request('/telegram/send-link', { method: 'POST', body: { kind, initData }, retries: 1 }),
+  sendLink: (kind, initData, extra = {}) =>
+    request('/telegram/send-link', { method: 'POST', body: { kind, initData, ...extra }, retries: 1 }),
 
   linkTelegram: (initData, accessToken) =>
     request('/auth/link-telegram', { method: 'POST', body: { initData }, accessToken, retries: 0 }),

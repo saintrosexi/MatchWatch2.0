@@ -213,43 +213,68 @@ export function roomInviteLink(code) {
   return url.toString();
 }
 
-/**
- * Отправить приглашение/карточку мэтча в чат Telegram.
- * `shareURL` открывает нативный список чатов: получателю не нужно
- * заходить в приложение, чтобы увидеть превью.
- */
-export function shareToTelegram({ url, text }) {
-  const app = wa();
-  try {
-    if (app?.openTelegramLink) {
-      const link = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text ?? '')}`;
-      app.openTelegramLink(link);
-      return true;
-    }
-    if (app?.shareURL) { app.shareURL(url, text); return true; }
-  } catch (error) {
-    trackError('Не удалось открыть шаринг Telegram', { module: MODULE.SHARE, error });
-  }
-  return false;
-}
 
-/** Инлайн-режим: пользователь выбирает чат, бот отправляет карточку с постером. */
+/**
+ * Инлайн-режим: родной выбор чата ПОВЕРХ Mini App.
+ *
+ * Это единственный способ позвать друга, не закрывая приложение.
+ * Всё остальное — ссылка через `openTelegramLink`, а она Mini App
+ * закрывает: человек жмёт «пригласить» и оказывается неизвестно где.
+ *
+ * Пробуем тремя заходами, от лучшего к худшему, потому что Telegram
+ * отвергает вызов по разным причинам и молча:
+ *
+ *   1. Люди и группы — как задумано.
+ *   2. Только люди. Тип чата, который бот обслуживать не может,
+ *      роняет ВЕСЬ вызов, а не отсекает лишнее; в комнату всё равно
+ *      зовут человека, так что потеря невелика.
+ *   3. Без указания типов вовсе — самая старая форма, её понимают
+ *      клиенты, не знающие про выбор чата.
+ *
+ * Версию проверяем заранее: на старом клиенте вызов кидает исключение,
+ * и три попытки подряд — это три исключения на ровном месте.
+ */
 export function shareViaInlineQuery(queryText, chatTypes = ['users', 'groups']) {
   const app = wa();
-  try {
-    if (app?.switchInlineQuery) { app.switchInlineQuery(queryText, chatTypes); return true; }
-  } catch (error) {
-    /*
-     * Инлайн-режим включается у бота отдельно, и его отсутствие — не сбой:
-     * ниже по стеку карточка уходит обычной ссылкой. Ошибкой это писать
-     * нельзя, иначе в журнале тонут настоящие поломки.
-     */
-    trackBusiness(BIZ.OFFLINE_DEGRADED, {
-      module: MODULE.SHARE,
-      level: LEVEL.INFO,
-      context: { missingFeature: 'switchInlineQuery', reason: error?.message ?? 'unavailable' },
-    });
+  if (!app?.switchInlineQuery) return false;
+
+  /* Выбор чата появился в Bot API 6.7; ниже — только старая форма. */
+  const canChooseChat = app.isVersionAtLeast?.('6.7') ?? false;
+  const attempts = canChooseChat
+    ? [chatTypes, ['users'], undefined]
+    : [undefined];
+
+  const failures = [];
+
+  for (const types of attempts) {
+    try {
+      if (types) app.switchInlineQuery(queryText, types);
+      else app.switchInlineQuery(queryText);
+      return true;
+    } catch (error) {
+      failures.push(`${types ? types.join('+') : 'без типов'}: ${error?.message ?? 'unavailable'}`);
+    }
   }
+
+  /*
+   * Не сбой продукта, а отказ платформы, но знать о нём надо: без него
+   * приглашение уходит путём, который закрывает приложение, и жалоба
+   * звучит как «раньше работало, теперь выкидывает».
+   */
+  trackBusiness(BIZ.OFFLINE_DEGRADED, {
+    module: MODULE.SHARE,
+    level: LEVEL.INFO,
+    context: {
+      missingFeature: 'switchInlineQuery',
+      reason: failures.join(' | ').slice(0, 300),
+      tgVersion: app.version ?? null,
+      tgPlatform: app.platform ?? null,
+      /* Запущено ли приложение из чата: без чата выбирать не из чего. */
+      hasChatInstance: Boolean(app.initDataUnsafe?.chat_instance),
+      canChooseChat,
+    },
+  });
+
   return false;
 }
 

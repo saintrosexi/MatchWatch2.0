@@ -1,6 +1,6 @@
 import { Crown, Lock, Settings, Share2, Sparkles, Users } from '../../ui/icons.js';
 import { PublicProfileView } from './PublicProfileView.jsx';
-import { shareViaInlineQuery, shareToTelegram, profileLink } from '../../lib/telegram.js';
+import { shareViaInlineQuery, profileLink } from '../../lib/telegram.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
@@ -33,14 +33,18 @@ export function ProfileView({
       toasts?.error?.('Сначала задайте ник — по нему вас и найдут');
       return;
     }
-    /* Инлайн-режим — родной выбор чата. Не вышло — обычный шеринг ссылки. */
+    /* Инлайн-режим — родной выбор чата поверх приложения. */
     if (shareViaInlineQuery(`profile ${username}`, ['users', 'groups'])) return;
 
+    /*
+     * Не вышло — копируем ссылку и остаёмся на месте. Открывать её
+     * через `openTelegramLink` нельзя: он закрывает Mini App, и человек,
+     * нажавший «Поделиться», теряет и профиль, и ссылку разом.
+     */
     const link = profileLink(username);
-    if (link && shareToTelegram({ url: link, text: 'Мой профиль в MatchWatch' })) return;
     if (link) {
       navigator.clipboard?.writeText(link);
-      toasts?.success?.('Ссылка на профиль скопирована');
+      toasts?.push?.('Telegram не дал выбрать чат — ссылка на профиль скопирована');
     }
   };
 
