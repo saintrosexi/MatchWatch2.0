@@ -56,6 +56,15 @@ export function ShowcaseEditor({
   /* Потолок визитки — из конфига подписки, а не из константы файла. */
   const pinLimit = pinLimitFor({ premium });
 
+  /*
+   * Закреплённые в порядке закрепления — они же кандидаты в обложку.
+   * Порядок сохраняем: он и есть порядок визитки на странице.
+   */
+  const heroOptions = useMemo(
+    () => form.pinnedIds.map((id) => options.find((o) => o.id === id)).filter(Boolean),
+    [form.pinnedIds, options],
+  );
+
   useEffect(() => {
     if (!open) return;
     setForm({
@@ -80,7 +89,15 @@ export function ShowcaseEditor({
   );
 
   const togglePin = (id) => setForm((f) => {
-    if (f.pinnedIds.includes(id)) return { ...f, pinnedIds: f.pinnedIds.filter((x) => x !== id) };
+    if (f.pinnedIds.includes(id)) {
+      /*
+       * Открепили фильм, который был обложкой, — обложку тоже снимаем.
+       * Иначе страница осталась бы с постером фильма, которого на ней
+       * уже нет, и объяснить это было бы нечем.
+       */
+      const heroId = f.heroId === id ? null : f.heroId;
+      return { ...f, heroId, pinnedIds: f.pinnedIds.filter((x) => x !== id) };
+    }
     if (f.pinnedIds.length >= pinLimit) return f;
     return { ...f, pinnedIds: [...f.pinnedIds, id] };
   });
@@ -195,27 +212,42 @@ export function ShowcaseEditor({
             <section className="stack gap-3">
               <span className="field__label"><Star size={14} /> Фильм про себя</span>
               <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
-                Его постер станет обложкой страницы.
+                Выбирается из закреплённых выше. Его постер станет обложкой страницы.
               </p>
-              <div className="row gap-2" style={{ flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className={`chip chip--interactive ${!form.heroId ? 'chip--on' : ''}`}
-                  onClick={() => setForm((f) => ({ ...f, heroId: null }))}
-                >
-                  без обложки
-                </button>
-                {options.slice(0, 12).map((item) => (
+
+              {/*
+                * Выбор идёт из ВИТРИНЫ, а не из всего любимого.
+                *
+                * Раньше здесь лежали первые двенадцать любимых, и обложкой
+                * оказывался фильм, которого на странице нет: человек видел
+                * постер и не находил, откуда он взялся. Теперь список один:
+                * что закрепил — из того и выбираешь.
+                */}
+              {heroOptions.length === 0 ? (
+                <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
+                  Закрепите фильм выше — и его можно будет сделать обложкой.
+                </p>
+              ) : (
+                <div className="row gap-2" style={{ flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    key={item.id}
-                    className={`chip chip--interactive ${form.heroId === item.id ? 'chip--on' : ''}`}
-                    onClick={() => setForm((f) => ({ ...f, heroId: item.id }))}
+                    className={`chip chip--interactive ${!form.heroId ? 'chip--on' : ''}`}
+                    onClick={() => setForm((f) => ({ ...f, heroId: null }))}
                   >
-                    {item.title}
+                    без обложки
                   </button>
-                ))}
-              </div>
+                  {heroOptions.map((item) => (
+                    <button
+                      type="button"
+                      key={item.id}
+                      className={`chip chip--interactive ${form.heroId === item.id ? 'chip--on' : ''}`}
+                      onClick={() => setForm((f) => ({ ...f, heroId: item.id }))}
+                    >
+                      {item.title}
+                    </button>
+                  ))}
+                </div>
+              )}
             </section>
           </>
         )}
