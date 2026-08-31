@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Crown, ShoppingCart, Sparkles, Star } from '../../ui/icons.js';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { trackMetric } from '../../lib/telemetry.js';
-import { openTelegramLink } from '../../lib/telegram.js';
+import { getInitData, openTelegramLink, requestWriteAccess } from '../../lib/telegram.js';
+import { api } from '../../lib/api.js';
 import { METRIC } from '../../../shared/telemetry/events.js';
 import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 
@@ -23,28 +24,69 @@ import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft, busy, onActivate, onPurchase, toasts }) {
   const { price, promo, benefits, starsShop } = PREMIUM_CONFIG;
 
+  const [sendingLink, setSendingLink] = useState(false);
+
   /*
-   * Переход к обменнику звёзд.
+   * Ссылку на обменник ПРИСЫЛАЕТ БОТ, а не открывает приложение.
    *
-   * `openTelegramLink` ЗАКРЫВАЕТ Mini App — это его штатное поведение,
-   * а не сбой. Но если клиент по какой-то причине не откроет чат, для
-   * человека остаётся только «приложение просто закрылось», и вернуться
-   * ему некуда: ссылку он больше не видит.
+   * `openTelegramLink` штатно закрывает Mini App, и если клиент не
+   * откроет чат — на Telegram Desktop так и происходит, — человек
+   * остаётся с закрывшимся приложением, без объяснения и без ссылки.
    *
-   * Поэтому перед уходом кладём ссылку в буфер и говорим об этом. Даже
-   * в худшем случае у человека на руках есть адрес, который достаточно
-   * вставить в поиск Telegram.
+   * Сообщение решает это целиком: приложение не закрывается, ссылка
+   * лежит в чате, по ней можно нажать когда угодно и вернуться позже.
+   *
+   * Порядок попыток: сообщение → если писать нельзя, спрашиваем
+   * разрешение и пробуем снова → и только если и это не вышло,
+   * открываем ссылку, предупредив, что приложение закроется.
    */
   const openStarsShop = async () => {
+    if (sendingLink) return;
     trackMetric(METRIC.PREMIUM_VIEWED, { context: { action: 'stars_shop' } });
+    setSendingLink(true);
 
     try {
+      const initData = getInitData();
+      if (!initData) { fallbackToLink(); return; }
+
+      let result = await api.sendLink('stars_shop', initData);
+
+      /*
+       * Боту ещё не разрешали писать. Спрашиваем прямо здесь: это
+       * одно касание и ровно то разрешение, которого не хватает.
+       */
+      if (result?.reason === 'no_chat' && await requestWriteAccess()) {
+        await api.allowNotifications(initData);
+        result = await api.sendLink('stars_shop', initData);
+      }
+
+      if (result?.sent) {
+        toasts?.success?.('Отправили ссылку в Telegram — она в чате с ботом');
+        return;
+      }
+
+      fallbackToLink();
+    } catch {
+      fallbackToLink();
+    } finally {
+      setSendingLink(false);
+    }
+  };
+
+  /*
+   * Запасной путь: старое поведение, но со словами.
+   *
+   * Ссылку кладём в буфер до перехода — если чат не откроется,
+   * у человека на руках останется адрес, который достаточно вставить
+   * в поиск Telegram.
+   */
+  const fallbackToLink = async () => {
+    try {
       await navigator.clipboard?.writeText(starsShop.url);
-      toasts?.push?.('Ссылка скопирована — открываем обменник');
     } catch {
       /* Буфер может быть недоступен; это не повод не открывать ссылку. */
     }
-
+    toasts?.push?.('Ссылка скопирована. Открываем Telegram — приложение закроется.');
     openTelegramLink(starsShop.url);
   };
 
@@ -162,8 +204,13 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           * он должен ровно там, где человек упрётся: после того, как
           * решил платить. Выше он отвлекал бы от самой оплаты.
           */}
-        <button type="button" className="premium-shop" onClick={openStarsShop}>
-          <ShoppingCart size={14} /> {starsShop.label}
+        <button
+          type="button"
+          className="premium-shop"
+          onClick={openStarsShop}
+          disabled={sendingLink}
+        >
+          <ShoppingCart size={14} /> {sendingLink ? 'Отправляем…' : starsShop.label}
         </button>
 
         <p className="faint premium-fineprint">
@@ -178,8 +225,8 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           <b>Карту привязывать не нужно.</b> Оплата проходит внутри Telegram
           звёздами, и подписка не продлевается сама: когда месяц кончится,
           мы просто спросим ещё раз. Оплата картой появится позже.
-          {' '}{starsShop.note} Если приложение закроется, а чат не откроется —
-          ссылка уже скопирована, вставьте её в поиск Telegram.
+          {' '}{starsShop.note} Ссылку пришлёт бот в Telegram — приложение
+          при этом не закроется.
         </p>
       </div>
     </Sheet>
