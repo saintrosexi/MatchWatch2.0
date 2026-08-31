@@ -88,6 +88,73 @@ export function DashboardView({ onBack }) {
             <Metric label="Ошибок" value={data.totals.errors} tone={data.totals.errors ? 'alarm' : undefined} />
           </div>
 
+          {/*
+            * Воронка стоит выше графиков намеренно: она отвечает
+            * на вопрос «где рвётся путь», а активность по дням — только
+            * на «сколько». Первое важнее, пока продукт никому не показан.
+            */}
+          <section className="section">
+            <h2 className="section__title">Воронка первой волны</h2>
+            <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
+              Уникальные люди, дошедшие до шага. Проценты — от первого шага,
+              а не от предыдущего: шаги не вложены строго, до мэтча можно
+              дойти, не создавая комнату.
+            </p>
+            <div className="funnel-steps">
+              {(data.funnel ?? []).map((step, i) => {
+                const prev = data.funnel[i - 1];
+                /* Падение считаем от предыдущего — именно оно и есть отвал. */
+                const drop = prev && prev.people > step.people
+                  ? prev.people - step.people
+                  : 0;
+                return (
+                  <div className="funnel-step" key={step.step}>
+                    <div className="funnel-step__head">
+                      <span className="funnel-step__label">{step.label}</span>
+                      <span className="funnel-step__value">
+                        {step.people}
+                        <span className="faint"> · {step.share}%</span>
+                      </span>
+                    </div>
+                    <div className="funnel-step__track">
+                      <div className="funnel-step__fill" style={{ width: `${step.share}%` }} />
+                    </div>
+                    {drop > 0 && (
+                      <span className="funnel-step__drop">−{drop} на этом шаге</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="section">
+            <h2 className="section__title">Что пишут</h2>
+            <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
+              Цифры показывают, что отваливается. Это — почему.
+            </p>
+            {(data.feedback ?? []).length === 0 ? (
+              <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
+                Сообщений пока нет.
+              </p>
+            ) : (
+              <div className="stack gap-2">
+                {data.feedback.map((item) => (
+                  <div className="feedback-item" key={item.id}>
+                    <p className="feedback-item__body">{item.body}</p>
+                    <span className="feedback-item__meta">
+                      {new Date(item.at).toLocaleString('ru-RU', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                      {item.screen ? ` · ${item.screen}` : ''}
+                      {item.release ? ` · ${item.release}` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
           <section className="section">
             <h2 className="section__title">Активность по дням</h2>
             <div className="surface dash-chart">

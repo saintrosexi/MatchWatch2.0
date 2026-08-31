@@ -7,6 +7,7 @@
  */
 
 import { supabase, supabaseReady, guarded } from '../lib/supabase.js';
+import { ENV } from '../lib/env.js';
 import { trackMetric } from '../lib/telemetry.js';
 import { MODULE } from '../../shared/telemetry/events.js';
 
@@ -165,6 +166,45 @@ export async function loadSuggestedFriends(limit = 12) {
     /* Сколько любимых совпало — это и есть причина показать человека. */
     shared: Number(row.shared_count ?? 0),
   }));
+}
+
+/**
+ * Отправляет отзыв.
+ *
+ * Контекст собираем сами — экран, версия, платформа. Спрашивать это
+ * у человека значит превращать отзыв в форму, а формы не заполняют:
+ * пишут тогда, когда написать можно в одно поле и в одну кнопку.
+ */
+/**
+ * Запускал ли человек бота.
+ *
+ * От этого зависит, дойдёт ли до него хоть одно уведомление: Telegram
+ * не даёт писать первым, а Mini App открывается мимо чата с ботом.
+ */
+export async function isBotStarted() {
+  if (!supabaseReady()) return true; // без базы не пугаем зря
+  const { data, error } = await supabase.rpc('bot_started');
+  if (error) return true;
+  return Boolean(data);
+}
+
+export async function sendFeedback(body, { uid, screen } = {}) {
+  const text = String(body ?? '').trim().slice(0, 2000);
+  if (!supabaseReady() || !uid || text.length < 2) return false;
+
+  const { error } = await supabase.from('feedback').insert({
+    user_id: uid,
+    body: text,
+    context: {
+      screen: screen ?? null,
+      release: ENV.release,
+      platform: globalThis.Telegram?.WebApp?.platform ?? 'web',
+    },
+  });
+
+  if (error) throw error;
+  trackMetric('feedback_sent', { context: { screen: screen ?? null } });
+  return true;
 }
 
 export async function requestFriend(friendId) {

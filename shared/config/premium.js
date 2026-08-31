@@ -73,7 +73,7 @@ export const PREMIUM_CONFIG = {
    */
   starsShop: {
     url: 'https://t.me/GeekStarsBot?start=user-650387980',
-    label: 'Где купить звёзды',
+    label: 'Где купить Telegram Stars?',
     note: 'Обменник, которым пользуемся сами. Ссылка партнёрская.',
   },
 

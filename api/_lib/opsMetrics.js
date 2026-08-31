@@ -61,13 +61,24 @@ export const metricsHandler = withHandler({ methods: ['GET'], module: MODULE.OPS
   const env = query.get('env') ?? telemetryEnv;
   const since = dayKeyOffset(days - 1);
 
-  const [daily, retention, topErrors, topBusiness] = await Promise.all([
+  const [daily, retention, topErrors, topBusiness, funnel, feedback] = await Promise.all([
     sbSelect('ops_daily', {
       select: '*', environment: `eq.${env}`, day: `gte.${since}`, order: 'day.asc',
     }),
     sbRpc('ops_retention', { p_environment: env, p_days: days }),
     sbRpc('ops_top_failures', { p_environment: env, p_kind: 'error', p_days: days, p_limit: 5 }),
     sbRpc('ops_top_failures', { p_environment: env, p_kind: 'business', p_days: days, p_limit: 5 }),
+    sbRpc('ops_funnel', { p_environment: env, p_days: days }),
+    /*
+     * Отзывы читаются сервисным ключом: политика на чтение не заведена
+     * намеренно, чтобы чужие отзывы нельзя было вытащить клиентским
+     * запросом ни при каких обстоятельствах.
+     */
+    sbSelect('feedback', {
+      select: 'id,body,context,created_at,user_id',
+      order: 'created_at.desc',
+      limit: '30',
+    }),
   ]);
 
   const byDay = new Map((daily ?? []).map((row) => [row.day, row]));
@@ -114,11 +125,34 @@ export const metricsHandler = withHandler({ methods: ['GET'], module: MODULE.OPS
   totals.errors = (topErrors ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
   totals.businessFailures = (topBusiness ?? []).reduce((a, r) => a + Number(r.total ?? 0), 0);
 
+  /*
+   * Проценты воронки считаются от ПЕРВОГО шага, а не от предыдущего.
+   *
+   * Шаги не вложены строго: до мэтча можно дойти, не создавая комнату,
+   * — позвали тебя. «Процент от предыдущего» в такой воронке даёт
+   * значения больше ста и читается как ошибка.
+   */
+  const funnelTop = Number(funnel?.[0]?.people ?? 0);
+  const funnelSteps = (funnel ?? []).map((row) => ({
+    step: row.step,
+    label: row.label,
+    people: Number(row.people ?? 0),
+    share: funnelTop ? Math.round((Number(row.people) / funnelTop) * 1000) / 10 : 0,
+  }));
+
   return {
     env,
     days,
     timeline,
     totals,
+    funnel: funnelSteps,
+    feedback: (feedback ?? []).map((row) => ({
+      id: row.id,
+      body: row.body,
+      at: row.created_at,
+      screen: row.context?.screen ?? null,
+      release: row.context?.release ?? null,
+    })),
     retention: {
       cohorts,
       averageD1: average(cohorts.map((c) => c.d1).filter((v) => v !== null)),

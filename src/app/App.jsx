@@ -21,6 +21,7 @@ import { VaultView } from '../features/vault/VaultView.jsx';
 import { loadFriends } from '../engine/social.js';
 import { inviteFriendToRoom } from '../engine/rooms.js';
 import { PremiumSheet } from '../features/premium/PremiumSheet.jsx';
+import { FeedbackSheet } from '../features/profile/FeedbackSheet.jsx';
 import { usePremium } from '../hooks/usePremium.js';
 import { NewsScreen } from '../features/news/NewsScreen.jsx';
 import { bannerNews } from '../../shared/config/news.js';
@@ -130,6 +131,7 @@ export default function App() {
   const [userState, setUserState] = useState(null);
   const [showcaseOpen, setShowcaseOpen] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   /*
    * Кто уже в друзьях — множество идентификаторов.
    *
@@ -1062,7 +1064,7 @@ export default function App() {
    */
   const content = renderView({
     view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
-    setView, setPrefs, setActorDeck, setRoomSession, setDetailsEntry, setPremiumOpen,
+    setView, setPrefs, setActorDeck, setRoomSession, setDetailsEntry, setPremiumOpen, setFeedbackOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
     handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
@@ -1224,6 +1226,15 @@ export default function App() {
           onOpenAll={() => { markNewsSeen(announced); setAnnounced(null); setView(VIEW.NEWS); }}
         />
 
+        <FeedbackSheet
+          open={feedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          uid={user?.uid}
+          /* Экран подставляем сами: он объясняет отзыв лучше любой темы. */
+          screen={view}
+          toasts={toasts}
+        />
+
         <PremiumSheet
           open={premiumOpen}
           onClose={() => setPremiumOpen(false)}
@@ -1323,7 +1334,7 @@ const SUBTITLES = ({ view, room, actorDeck }) => {
 function renderView(ctx) {
   const {
     view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
-    setView, setPrefs, setRoomSession, setDetailsEntry, setActorDeck, setPremiumOpen,
+    setView, setPrefs, setRoomSession, setDetailsEntry, setActorDeck, setPremiumOpen, setFeedbackOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
     handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
@@ -1423,6 +1434,7 @@ function renderView(ctx) {
           onOpenDashboard={() => setView(VIEW.DASHBOARD)}
           onPrefsChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))}
           onLogout={auth.logout}
+          onOpenFeedback={() => setFeedbackOpen(true)}
           auth={auth}
           toasts={toasts}
         />

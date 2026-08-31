@@ -1,8 +1,12 @@
 import {
   ArrowLeft, BarChart3, Check, Crown, Download, LogOut, Pencil, Sparkles,
-  Vibrate, Volume2, VolumeX, Star, Lock,
+  Vibrate, Volume2, VolumeX, Star, Lock, Send,
 } from '../../ui/icons.js';
+import { useEffect, useState } from 'react';
 import { StatusStrip } from '../../ui/States.jsx';
+import { isBotStarted } from '../../engine/social.js';
+import { openTelegramLink } from '../../lib/telegram.js';
+import { ENV } from '../../lib/env.js';
 import { TelegramLinkCard } from './TelegramLinkCard.jsx';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
@@ -24,10 +28,27 @@ import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.
 export function SettingsView({
   user, profile, prefs, access, premium,
   onBack, onEditProfile, onEditShowcase, onOpenPremium, onOpenDashboard,
-  onPrefsChange, onLogout, auth, toasts,
+  onPrefsChange, onLogout, onOpenFeedback, auth, toasts,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
+
+  /* `null` — ещё не знаем; предупреждать до ответа сервера нельзя. */
+  const [botStarted, setBotStarted] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    isBotStarted()
+      .then((ok) => { if (alive) setBotStarted(ok); })
+      .catch(() => { /* не знаем — молчим, пугать зря хуже */ });
+    return () => { alive = false; };
+  }, []);
+
+  const openBot = () => {
+    const bot = ENV.telegramBot;
+    if (!bot) return;
+    openTelegramLink(`https://t.me/${bot}?start=notify`);
+  };
 
   return (
     <div className="view">
@@ -42,6 +63,25 @@ export function SettingsView({
         </div>
         <p className="view__sub">Всё, что видите только вы.</p>
       </header>
+
+      {/*
+        * Уведомления не включатся сами.
+        *
+        * Telegram не даёт боту написать первым, а Mini App открывается
+        * ссылкой мимо чата с ботом — большинство пришедших Start
+        * не нажимают вовсе, и заявки в друзья с приглашениями в комнату
+        * молча копятся в очереди. Полоса ведёт прямо в чат.
+        */}
+      {botStarted === false && (
+        <StatusStrip
+          tone="warn"
+          action={{ label: 'Включить', onClick: openBot }}
+        >
+          Уведомления выключены: бот не сможет написать, пока вы не нажмёте
+          у него Start. Без этого не придут ни заявки в друзья, ни
+          приглашения в комнату.
+        </StatusStrip>
+      )}
 
       {!profile?.username && (
         <StatusStrip tone="warn" action={{ label: 'Задать', onClick: onEditProfile }}>
@@ -186,6 +226,17 @@ export function SettingsView({
             onChange={(v) => onPrefsChange({ ratePrompt: v })}
           />
         </div>
+      </section>
+
+      {/* ── Обратная связь ────────────────────────────────────── */}
+      <section className="section">
+        <h2 className="section__title">Обратная связь</h2>
+        <SettingLink
+          icon={Send}
+          label="Написать нам"
+          hint="Что мешает, что раздражает, чего не хватает — читаем всё"
+          onClick={onOpenFeedback}
+        />
       </section>
 
       <div className="row row--wrap gap-3">

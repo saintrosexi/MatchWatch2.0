@@ -1494,3 +1494,59 @@ body:has(.profile-wash) .aurora { opacity: .18; }
   cursor: pointer;
 }
 .premium-shop:hover { color: var(--gold); }
+
+/* ── Воронка и отзывы в дашборде ─────────────────────────────────── */
+
+.funnel-steps { display: flex; flex-direction: column; gap: var(--s-3); }
+.funnel-step { display: flex; flex-direction: column; gap: 5px; }
+.funnel-step__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.funnel-step__label { font-size: var(--t-small); color: var(--text-mid); }
+.funnel-step__value {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--text-hi);
+}
+.funnel-step__track {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .06);
+  overflow: hidden;
+}
+.funnel-step__fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--grad-flame);
+  transition: width var(--dur-base) var(--ease-out);
+}
+/*
+ * Отвал подписан отдельно и красным: это единственное число, ради
+ * которого воронку и смотрят, — остальные строки лишь фон для него.
+ */
+.funnel-step__drop { font-size: var(--t-micro); color: var(--coral); }
+
+.feedback-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--s-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, .03);
+}
+.feedback-item__body {
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--text-hi);
+  white-space: pre-wrap;
+}
+.feedback-item__meta {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--text-low);
+}
