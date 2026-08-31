@@ -1029,6 +1029,13 @@
 .news-entry[data-tag='premium'] .news-entry__tag { background: var(--gold-soft); color: var(--gold); }
 .news-entry[data-tag='feature'] .news-entry__tag { background: var(--coral-soft); color: var(--coral); }
 .news-entry__date { font-size: var(--t-micro); color: var(--text-low); font-family: var(--font-mono); }
+/* Версия — моноширинным, как дата: это идентификатор, а не заголовок. */
+.news-entry__version {
+  font-size: var(--t-micro);
+  font-family: var(--font-mono);
+  color: var(--text-low);
+  letter-spacing: .02em;
+}
 .news-entry__title { font-family: var(--font-display); font-size: var(--t-head); font-weight: 700; }
 .news-entry__text { font-size: var(--t-small); line-height: 1.55; color: var(--text-mid); }
 .news-entry__list {

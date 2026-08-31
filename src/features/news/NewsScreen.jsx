@@ -66,7 +66,7 @@ export function NewsScreen({ item, onClose, onAction, onOpenAll }) {
 
       <div className="announce__body">
         <span className="announce__badge">
-          <Icon size={13} weight="fill" /> {NEWS_TAG_LABEL[item.tag] ?? 'Новое'}
+          <Icon size={13} weight="fill" /> {item.version ?? NEWS_TAG_LABEL[item.tag] ?? 'Новое'}
         </span>
 
         <span className="announce__crest"><Icon size={40} weight="fill" /></span>
@@ -93,9 +93,14 @@ export function NewsScreen({ item, onClose, onAction, onOpenAll }) {
           </ul>
         )}
 
-        {!LISTS[item.listFrom] && item.body.map((paragraph) => (
-          <p className="announce__text" key={paragraph.slice(0, 40)}>{paragraph}</p>
-        ))}
+        {/*
+          * У записи без списка выгод показываем ПЕРВЫЙ абзац, а не все:
+          * полноэкранное объявление — обложка, а не статья. Остальное
+          * человек прочитает в дневнике, куда ведёт кнопка.
+          */}
+        {!LISTS[item.listFrom] && item.body[0] && (
+          <p className="announce__text">{item.body[0]}</p>
+        )}
 
         {isPremium && (
           <p className="announce__fineprint">
@@ -106,16 +111,26 @@ export function NewsScreen({ item, onClose, onAction, onOpenAll }) {
       </div>
 
       <div className="announce__actions">
+        {/*
+          * Подпись кнопки задаёт сама запись: «Подключить за 0 ₽»
+          * и «Подробнее» ведут в разные места и обещают разное,
+          * а одна общая формулировка врала бы в одном из случаев.
+          */}
         <button type="button" className="btn btn--gold btn--block btn--lg" onClick={onAction}>
           {isPremium ? <Crown size={17} weight="fill" /> : <Sparkles size={17} />}
-          {isPremium ? 'Подключить за 0 ₽' : 'Посмотреть'}
+          {item.cta ?? (isPremium ? 'Подключить за 0 ₽' : 'Посмотреть')}
         </button>
 
         <div className="row gap-2">
           <button type="button" className="btn btn--quiet btn--block" onClick={onClose}>
             Позже
           </button>
-          {onOpenAll && (
+          {/*
+            * «Все обновления» прячем, когда туда же ведёт и главная кнопка:
+            * две кнопки в одно место читаются как разные исходы, и человек
+            * тратит выбор там, где выбора нет.
+            */}
+          {onOpenAll && item.action !== 'news' && (
             <button type="button" className="btn btn--quiet btn--block" onClick={onOpenAll}>
               Все обновления
             </button>

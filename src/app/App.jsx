@@ -1442,6 +1442,7 @@ function renderView(ctx) {
         <WhatsNewView
           onBack={() => setView(VIEW.ME)}
           onOpenPremium={() => setPremiumOpen(true)}
+          onOpenFeedback={() => setFeedbackOpen(true)}
         />
       );
 

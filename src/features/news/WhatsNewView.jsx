@@ -1,4 +1,4 @@
-import { ArrowLeft, Crown, Sparkles, Wrench } from '../../ui/icons.js';
+import { ArrowLeft, Crown, Send, Sparkles, Wrench } from '../../ui/icons.js';
 import { NEWS, NEWS_TAG, NEWS_TAG_LABEL } from '../../../shared/config/news.js';
 import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 
@@ -22,7 +22,7 @@ const ICONS = {
  * просмотра», а не «добавлен компонент RateAsk». Список коммитов
  * человеку не говорит ничего, и читать его он не будет.
  */
-export function WhatsNewView({ onBack, onOpenPremium }) {
+export function WhatsNewView({ onBack, onOpenPremium, onOpenFeedback }) {
   return (
     <div className="view">
       <header className="view__head">
@@ -32,9 +32,11 @@ export function WhatsNewView({ onBack, onOpenPremium }) {
               <ArrowLeft size={18} />
             </button>
           )}
-          <h1 className="view__title">Что нового</h1>
+          <h1 className="view__title">Дневник разработки</h1>
         </div>
-        <p className="view__sub">Мы дописываем сюда каждое заметное обновление.</p>
+        <p className="view__sub">
+          Пишем сюда о каждом заметном изменении — что сделали и почему именно так.
+        </p>
       </header>
 
       <div className="news-list">
@@ -46,6 +48,9 @@ export function WhatsNewView({ onBack, onOpenPremium }) {
                 <span className="news-entry__tag">
                   <Icon size={12} weight="fill" /> {NEWS_TAG_LABEL[item.tag] ?? 'Новое'}
                 </span>
+                {item.version && (
+                  <span className="news-entry__version">{item.version}</span>
+                )}
                 <time className="news-entry__date" dateTime={item.date}>
                   {new Date(item.date).toLocaleDateString('ru-RU', {
                     day: 'numeric', month: 'long', year: 'numeric',
@@ -81,10 +86,22 @@ export function WhatsNewView({ onBack, onOpenPremium }) {
         })}
       </div>
 
-      <p className="faint" style={{ fontSize: 'var(--t-micro)', textAlign: 'center' }}>
-        Есть что сказать про обновление? Напишите нам — на этой стадии
-        каждый отзыв меняет продукт заметно сильнее, чем потом.
-      </p>
+      {/*
+        * Приглашение написать заканчивается кнопкой, а не призывом.
+        * «Напишите нам» без способа написать — просьба, за которую
+        * человеку самому искать, куда идти.
+        */}
+      <div className="stack gap-3" style={{ textAlign: 'center' }}>
+        <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
+          Есть что сказать про обновление? На этой стадии каждый отзыв
+          меняет продукт заметно сильнее, чем потом.
+        </p>
+        {onOpenFeedback && (
+          <button type="button" className="btn btn--ghost" onClick={onOpenFeedback}>
+            <Send size={15} /> Написать нам
+          </button>
+        )}
+      </div>
     </div>
   );
 }
