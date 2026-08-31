@@ -8,6 +8,8 @@ import { X } from './icons.js';
 export function Sheet({ open, onClose, title, children, footer, variant = 'bottom', labelledBy }) {
   const panelRef = useRef(null);
   const restoreFocus = useRef(null);
+  /* Началось ли нажатие именно на подложке, а не внутри шторки. */
+  const pressedScrim = useRef(false);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -43,7 +45,25 @@ export function Sheet({ open, onClose, title, children, footer, variant = 'botto
   return (
     <div
       className={`scrim ${variant === 'center' ? 'scrim--center' : ''}`}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
+      /*
+       * Закрываем, только если нажатие И отпускание пришлись на подложку.
+       *
+       * Раньше хватало одного `mousedown` — и на айфоне шторка
+       * захлопывалась в тот момент, когда человек тапал по полю ввода.
+       * Клавиатура поднимается и сдвигает вёрстку, а iOS досылает
+       * синтетический mouse-событие по СТАРЫМ координатам: под ними
+       * к тому моменту уже не поле, а подложка. Со стороны это
+       * выглядит как «не успел напечатать — закрылось».
+       *
+       * Пара «нажал и отпустил на подложке» заодно чинит второй случай:
+       * выделение текста мышью, увёденное за край шторки, больше её
+       * не закрывает.
+       */
+      onPointerDown={(e) => { pressedScrim.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (pressedScrim.current && e.target === e.currentTarget) onClose?.();
+        pressedScrim.current = false;
+      }}
     >
       <div
         className="sheet surface--hairline"

@@ -272,6 +272,13 @@
    * эффект в приложении — ради того, что и так закрыто на три четверти.
    */
   background: rgba(0, 0, 0, 0.86);
+  /*
+   * Высота по динамическому вьюпорту: с открытой клавиатурой на айфоне
+   * `100vh` остаётся прежним, и низ шторки вместе с полем ввода уезжает
+   * ровно под клавиатуру. `dvh` сжимается вместе с видимой областью.
+   * `inset: 0` выше — запасной вариант для клиентов постарше.
+   */
+  height: 100dvh;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -283,7 +290,7 @@
 .sheet {
   width: 100%;
   max-width: 560px;
-  max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--ink-900);
