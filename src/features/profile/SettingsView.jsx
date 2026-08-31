@@ -5,7 +5,8 @@ import {
 import { useEffect, useState } from 'react';
 import { StatusStrip } from '../../ui/States.jsx';
 import { isBotStarted } from '../../engine/social.js';
-import { openTelegramLink } from '../../lib/telegram.js';
+import { getInitData, openTelegramLink, requestWriteAccess } from '../../lib/telegram.js';
+import { api } from '../../lib/api.js';
 import { ENV } from '../../lib/env.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 import { RELEASE } from '../../../shared/config/news.js';
@@ -28,7 +29,7 @@ import { RELEASE } from '../../../shared/config/news.js';
 export function SettingsView({
   profile, prefs, access, premium,
   onBack, onEditProfile, onEditShowcase, onOpenPremium, onOpenDashboard,
-  onPrefsChange, onLogout, onOpenFeedback, onOpenNews,
+  onPrefsChange, onLogout, onOpenFeedback, onOpenNews, toasts,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
@@ -44,7 +45,59 @@ export function SettingsView({
     return () => { alive = false; };
   }, []);
 
-  const openBot = () => {
+  const [asking, setAsking] = useState(false);
+
+  /*
+   * Включение уведомлений.
+   *
+   * Сначала родное окно Telegram «разрешить боту писать вам?»: одно
+   * касание, не выходя из приложения. Раньше здесь была ссылка на чат
+   * с ботом, и она не работала — `openTelegramLink` закрывает Mini App,
+   * а бот, чей Mini App только что был открыт, это тот же чат, откуда
+   * человек и пришёл. Его просто возвращало назад, и выглядело это как
+   * «выкинуло в Telegram и ничего не произошло». Start ссылка тоже
+   * не отправляет: его всё равно надо нажимать руками.
+   *
+   * Ссылка осталась запасным путём — для старых клиентов, где родного
+   * окна нет, и для отказа: там человеку и правда некуда идти, кроме
+   * чата с ботом.
+   */
+  const enableNotifications = async () => {
+    if (asking) return;
+    setAsking(true);
+    try {
+      const granted = await requestWriteAccess();
+      const initData = getInitData();
+
+      if (granted && initData) {
+        /* Разрешение живёт у Telegram; рассыльщик узнаёт о нём отсюда. */
+        const result = await api.allowNotifications(initData);
+
+        /*
+         * `linked: false` — разрешение записано, но не на этот профиль:
+         * аккаунт заведён по почте, а Telegram другой. Полосу не гасим
+         * и «готово» не говорим, иначе человек будет ждать сообщений,
+         * которые никогда не придут.
+         */
+        if (result?.linked === false) {
+          toasts?.error?.('Этот Telegram не привязан к аккаунту — войдите через Telegram');
+          return;
+        }
+
+        setBotStarted(true);
+        toasts?.success?.('Готово — уведомления придут в Telegram');
+        return;
+      }
+
+      openBotChat();
+    } catch {
+      openBotChat();
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const openBotChat = () => {
     const bot = ENV.telegramBot;
     if (!bot) return;
     openTelegramLink(`https://t.me/${bot}?start=notify`);
@@ -75,7 +128,7 @@ export function SettingsView({
       {botStarted === false && (
         <StatusStrip
           tone="warn"
-          action={{ label: 'Включить', onClick: openBot }}
+          action={{ label: asking ? 'Спрашиваем…' : 'Включить', onClick: enableNotifications }}
         >
           Уведомления выключены: бот не сможет написать, пока вы не нажмёте
           у него Start. Без этого не придут ни заявки в друзья, ни

@@ -318,6 +318,42 @@ export function openTelegramLink(url) {
   return false;
 }
 
+/**
+ * Попросить у человека разрешение писать ему в Telegram.
+ *
+ * Это правильный путь вместо ссылки на чат с ботом. Ссылка
+ * `t.me/<bot>?start=` из Mini App работает плохо: `openTelegramLink`
+ * сначала ЗАКРЫВАЕТ приложение, а бот, чей Mini App только что был
+ * открыт, — это тот самый чат, из которого человек и пришёл. Клиент
+ * просто возвращает его назад, и со стороны это выглядит как «выкинуло
+ * в Telegram и ничего не произошло». Плюс сам Start всё равно надо
+ * нажать руками — ссылка его не отправляет.
+ *
+ * `requestWriteAccess` показывает родное окно «разрешить боту писать
+ * вам?»: одно касание, не выходя из приложения. Разрешение даёт ровно
+ * то, что нам нужно, — право отправить сообщение, — и не требует ни
+ * Start, ни перехода в чат.
+ *
+ * @returns {Promise<boolean>} разрешил ли человек
+ */
+export function requestWriteAccess() {
+  const app = wa();
+
+  return new Promise((resolve) => {
+    /* Старый клиент метода не знает — там остаётся запасной путь. */
+    if (!app?.requestWriteAccess) { resolve(false); return; }
+
+    try {
+      app.requestWriteAccess((granted) => resolve(Boolean(granted)));
+    } catch (error) {
+      trackError('Не удалось запросить право на сообщения', {
+        module: MODULE.AUTH_TELEGRAM, level: LEVEL.WARNING, error,
+      });
+      resolve(false);
+    }
+  });
+}
+
 /** Подтверждение выхода — иначе пользователь случайно закроет комнату. */
 export function enableClosingConfirmation(enabled) {
   const app = wa();

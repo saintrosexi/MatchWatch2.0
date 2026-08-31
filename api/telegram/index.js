@@ -18,12 +18,15 @@
 import { webhookHandler } from '../_lib/botWebhook.js';
 import { dispatchHandler } from '../_lib/botDispatch.js';
 import { setupHandler } from '../_lib/botSetup.js';
+import { notifyAllowHandler } from '../_lib/botNotifyAllow.js';
 import { sendJson } from '../_lib/http.js';
 
 const ROUTES = {
   webhook: webhookHandler,
   dispatch: dispatchHandler,
   setup: setupHandler,
+  /* Разрешение писать, выданное родным окном Telegram в Mini App. */
+  'notify-allow': notifyAllowHandler,
 };
 
 export default async function handler(req, res) {

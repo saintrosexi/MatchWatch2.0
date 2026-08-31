@@ -1451,6 +1451,7 @@ function renderView(ctx) {
           onLogout={auth.logout}
           onOpenFeedback={() => setFeedbackOpen(true)}
           onOpenNews={() => openNews(VIEW.SETTINGS)}
+          toasts={toasts}
         />
       );
 

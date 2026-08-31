@@ -161,6 +161,10 @@ export const api = {
   /** Какие способы входа привязаны к текущему аккаунту. */
   identityStatus: (accessToken) => request('/auth/link-telegram', { accessToken, retries: 0 }),
 
+  /** Человек разрешил боту писать ему — записываем право на доставку. */
+  allowNotifications: (initData) =>
+    request('/telegram/notify-allow', { method: 'POST', body: { initData }, retries: 1 }),
+
   linkTelegram: (initData, accessToken) =>
     request('/auth/link-telegram', { method: 'POST', body: { initData }, accessToken, retries: 0 }),
 
