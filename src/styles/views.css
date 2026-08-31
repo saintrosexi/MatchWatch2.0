@@ -1029,13 +1029,34 @@
 .news-entry[data-tag='premium'] .news-entry__tag { background: var(--gold-soft); color: var(--gold); }
 .news-entry[data-tag='feature'] .news-entry__tag { background: var(--coral-soft); color: var(--coral); }
 .news-entry__date { font-size: var(--t-micro); color: var(--text-low); font-family: var(--font-mono); }
-/* Версия — моноширинным, как дата: это идентификатор, а не заголовок. */
-.news-entry__version {
-  font-size: var(--t-micro);
+/* ── Дневник: заголовок выпуска ───────────────────────────────── */
+.news-release { display: flex; flex-direction: column; gap: var(--s-4); }
+.news-release + .news-release { margin-top: var(--s-6); }
+/*
+ * Заголовок выпуска не липкий намеренно: за ним просвечивает живой
+ * фон приложения, и полоса с непрозрачной подложкой резала бы его
+ * швом поперёк экрана. Пока выпуск один, липкость всё равно нечего
+ * держать в поле зрения.
+ */
+.news-release__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
   font-family: var(--font-mono);
-  color: var(--text-low);
-  letter-spacing: .02em;
+  font-size: var(--t-small);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-mid);
 }
+/* Линия добирает строку до края — заголовок читается как разделитель. */
+.news-release__title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--grad-hairline);
+}
+
 .news-entry__title { font-family: var(--font-display); font-size: var(--t-head); font-weight: 700; }
 .news-entry__text { font-size: var(--t-small); line-height: 1.55; color: var(--text-mid); }
 .news-entry__list {

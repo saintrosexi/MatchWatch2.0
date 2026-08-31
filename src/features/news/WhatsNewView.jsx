@@ -1,5 +1,5 @@
 import { ArrowLeft, Crown, Send, Sparkles, Wrench } from '../../ui/icons.js';
-import { NEWS, NEWS_TAG, NEWS_TAG_LABEL } from '../../../shared/config/news.js';
+import { NEWS_TAG, NEWS_TAG_LABEL, newsByRelease } from '../../../shared/config/news.js';
 import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 
 /** Списки, на которые ссылаются записи. Один источник с витриной подписки. */
@@ -39,52 +39,62 @@ export function WhatsNewView({ onBack, onOpenPremium, onOpenFeedback }) {
         </p>
       </header>
 
-      <div className="news-list">
-        {NEWS.map((item) => {
-          const Icon = ICONS[item.tag] ?? Sparkles;
-          return (
-            <article className="news-entry" key={item.id} data-tag={item.tag}>
-              <div className="news-entry__head">
-                <span className="news-entry__tag">
-                  <Icon size={12} weight="fill" /> {NEWS_TAG_LABEL[item.tag] ?? 'Новое'}
-                </span>
-                {item.version && (
-                  <span className="news-entry__version">{item.version}</span>
-                )}
-                <time className="news-entry__date" dateTime={item.date}>
-                  {new Date(item.date).toLocaleDateString('ru-RU', {
-                    day: 'numeric', month: 'long', year: 'numeric',
-                  })}
-                </time>
-              </div>
+      {/*
+        * Статьи сгруппированы по выпуску, а не свалены в один поток:
+        * иначе не видно, что вышло вместе, — а для дневника это половина
+        * смысла.
+        */}
+      {newsByRelease().map((group) => (
+        <section className="news-release" key={group.release ?? 'прочее'}>
+          {group.release && (
+            <h2 className="news-release__title">{group.release}</h2>
+          )}
 
-              <h2 className="news-entry__title">{item.title}</h2>
+          <div className="news-list">
+            {group.items.map((item) => {
+              const Icon = ICONS[item.tag] ?? Sparkles;
+              return (
+                <article className="news-entry" key={item.id} data-tag={item.tag}>
+                  <div className="news-entry__head">
+                    <span className="news-entry__tag">
+                      <Icon size={12} weight="fill" /> {NEWS_TAG_LABEL[item.tag] ?? 'Новое'}
+                    </span>
+                    <time className="news-entry__date" dateTime={item.date}>
+                      {new Date(item.date).toLocaleDateString('ru-RU', {
+                        day: 'numeric', month: 'long', year: 'numeric',
+                      })}
+                    </time>
+                  </div>
 
-              {item.body.map((paragraph) => (
-                <p className="news-entry__text" key={paragraph.slice(0, 40)}>{paragraph}</p>
-              ))}
+                  <h3 className="news-entry__title">{item.title}</h3>
 
-              {LISTS[item.listFrom] && (
-                <ul className="news-entry__list">
-                  {LISTS[item.listFrom].map((benefit) => (
-                    <li key={benefit}>{benefit}</li>
+                  {item.body.map((paragraph) => (
+                    <p className="news-entry__text" key={paragraph.slice(0, 40)}>{paragraph}</p>
                   ))}
-                </ul>
-              )}
 
-              {item.tail?.map((paragraph) => (
-                <p className="news-entry__text" key={paragraph.slice(0, 40)}>{paragraph}</p>
-              ))}
+                  {LISTS[item.listFrom] && (
+                    <ul className="news-entry__list">
+                      {LISTS[item.listFrom].map((benefit) => (
+                        <li key={benefit}>{benefit}</li>
+                      ))}
+                    </ul>
+                  )}
 
-              {item.action === 'premium' && onOpenPremium && (
-                <button type="button" className="btn btn--gold" onClick={onOpenPremium}>
-                  <Crown size={15} weight="fill" /> Посмотреть премиум
-                </button>
-              )}
-            </article>
-          );
-        })}
-      </div>
+                  {item.tail?.map((paragraph) => (
+                    <p className="news-entry__text" key={paragraph.slice(0, 40)}>{paragraph}</p>
+                  ))}
+
+                  {item.action === 'premium' && onOpenPremium && (
+                    <button type="button" className="btn btn--gold" onClick={onOpenPremium}>
+                      <Crown size={15} weight="fill" /> Посмотреть премиум
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       {/*
         * Приглашение написать заканчивается кнопкой, а не призывом.

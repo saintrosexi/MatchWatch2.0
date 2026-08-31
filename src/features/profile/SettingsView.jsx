@@ -1,6 +1,6 @@
 import {
   ArrowLeft, BarChart3, Check, Crown, Download, LogOut, Pencil, Sparkles,
-  Vibrate, Volume2, VolumeX, Star, Lock, Send,
+  Vibrate, Volume2, VolumeX, Star, Lock, Send, Newspaper,
 } from '../../ui/icons.js';
 import { useEffect, useState } from 'react';
 import { StatusStrip } from '../../ui/States.jsx';
@@ -8,6 +8,7 @@ import { isBotStarted } from '../../engine/social.js';
 import { openTelegramLink } from '../../lib/telegram.js';
 import { ENV } from '../../lib/env.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
+import { RELEASE } from '../../../shared/config/news.js';
 
 /**
  * Настройки профиля — всё служебное за одной дверью.
@@ -27,7 +28,7 @@ import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.
 export function SettingsView({
   profile, prefs, access, premium,
   onBack, onEditProfile, onEditShowcase, onOpenPremium, onOpenDashboard,
-  onPrefsChange, onLogout, onOpenFeedback,
+  onPrefsChange, onLogout, onOpenFeedback, onOpenNews,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
@@ -209,15 +210,34 @@ export function SettingsView({
         </div>
       </section>
 
-      {/* ── Обратная связь ────────────────────────────────────── */}
+      {/* ── О приложении ──────────────────────────────────────── */}
+      {/*
+        * Дневник разработки живёт здесь, а не только в разовом
+        * объявлении. Объявление закрывается один раз и навсегда —
+        * страница, до которой можно было добраться только через него,
+        * была не спрятана, а недостижима.
+        *
+        * Обратная связь стоит следом намеренно: прочитал, что мы
+        * сделали, — тут же есть чем ответить.
+        */}
       <section className="section">
-        <h2 className="section__title">Обратная связь</h2>
-        <SettingLink
-          icon={Send}
-          label="Написать нам"
-          hint="Что мешает, что раздражает, чего не хватает — читаем всё"
-          onClick={onOpenFeedback}
-        />
+        <h2 className="section__title">О приложении</h2>
+        <div className="stack gap-2">
+          {onOpenNews && (
+            <SettingLink
+              icon={Newspaper}
+              label="Дневник разработки"
+              hint={`Что нового в ${RELEASE} — и почему сделано именно так`}
+              onClick={onOpenNews}
+            />
+          )}
+          <SettingLink
+            icon={Send}
+            label="Написать нам"
+            hint="Что мешает, что раздражает, чего не хватает — читаем всё"
+            onClick={onOpenFeedback}
+          />
+        </div>
       </section>
 
       <div className="row row--wrap gap-3">
@@ -231,9 +251,11 @@ export function SettingsView({
         </button>
       </div>
 
-      {access?.tier === 'plus' && (
-        <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>Тариф: Plus</p>
-      )}
+      {/* Версия внизу — там, где её ищут, и там, где она никому не мешает. */}
+      <p className="faint" style={{ fontSize: 'var(--t-micro)', textAlign: 'center' }}>
+        MatchWatch {RELEASE}
+        {access?.tier === 'plus' && ' · тариф Plus'}
+      </p>
     </div>
   );
 }

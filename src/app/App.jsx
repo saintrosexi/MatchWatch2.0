@@ -149,6 +149,21 @@ export default function App() {
   const [announced, setAnnounced] = useState(null);
 
   /*
+   * Куда возвращает «назад» из дневника.
+   *
+   * В дневник приходят с двух сторон: из настроек и из разового
+   * объявления. Одна и та же кнопка «назад» не может быть права
+   * в обоих случаях — она либо теряет место человека в настройках,
+   * либо уводит его в экран, который он не открывал.
+   */
+  const [newsFrom, setNewsFrom] = useState(VIEW.ME);
+
+  const openNews = useCallback((from) => {
+    setNewsFrom(from);
+    setView(VIEW.NEWS);
+  }, []);
+
+  /*
    * Прочитанное гасится, но остаётся на месте.
    *
    * Блок «что нового» постоянный, как в банковских приложениях: разовое
@@ -1069,7 +1084,7 @@ export default function App() {
     handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
     desktopShell: platform.shell === 'desktop',
-    buildSharedDeck, deckBuilding,
+    buildSharedDeck, deckBuilding, newsFrom, openNews,
   });
 
 
@@ -1157,6 +1172,7 @@ export default function App() {
           <MobileShell
             {...shellProps}
             nav={nav}
+            scrollKey={view}
             fixed={view === VIEW.DECK}
             statusStrip={statusStrip}
             toolbar={view === VIEW.DECK && (
@@ -1221,9 +1237,9 @@ export default function App() {
             // Объявление про подписку ведёт в витрину: она и есть ответ
             // на вопрос «что нового», лишний экран между ними — трение.
             if (announced?.action === 'premium') setPremiumOpen(true);
-            else setView(VIEW.NEWS);
+            else openNews(VIEW.ME);
           }}
-          onOpenAll={() => { markNewsSeen(announced); setAnnounced(null); setView(VIEW.NEWS); }}
+          onOpenAll={() => { markNewsSeen(announced); setAnnounced(null); openNews(VIEW.ME); }}
         />
 
         <FeedbackSheet
@@ -1338,7 +1354,7 @@ function renderView(ctx) {
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
     handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
-    desktopShell, buildSharedDeck, deckBuilding,
+    desktopShell, buildSharedDeck, deckBuilding, newsFrom, openNews,
   } = ctx;
 
   const openDetails = (stub) => setDetailsEntry({
@@ -1434,13 +1450,14 @@ function renderView(ctx) {
           onPrefsChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))}
           onLogout={auth.logout}
           onOpenFeedback={() => setFeedbackOpen(true)}
+          onOpenNews={() => openNews(VIEW.SETTINGS)}
         />
       );
 
     case VIEW.NEWS:
       return (
         <WhatsNewView
-          onBack={() => setView(VIEW.ME)}
+          onBack={() => setView(newsFrom)}
           onOpenPremium={() => setPremiumOpen(true)}
           onOpenFeedback={() => setFeedbackOpen(true)}
         />

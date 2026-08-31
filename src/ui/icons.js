@@ -44,6 +44,8 @@ export {
   HeartBreak as HeartOff,
   Image,
   Info,
+  /* Дневник разработки: газета, а не книга — это выпуски, а не том. */
+  Newspaper,
   Key as KeyRound,
   Link as Link2,
   LinkBreak as Link2Off,

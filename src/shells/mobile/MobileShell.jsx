@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { WifiOff } from '../../ui/icons.js';
 import { BrandLockup } from '../../ui/Brand.jsx';
 
@@ -14,8 +15,25 @@ import { BrandLockup } from '../../ui/Brand.jsx';
  */
 export function MobileShell({
   nav, active, onNavigate, children, fixed = false,
-  user, online = true, statusStrip, right, toolbar,
+  user, online = true, statusStrip, right, toolbar, scrollKey,
 }) {
+  const mainRef = useRef(null);
+
+  /*
+   * Новый экран начинается сверху.
+   *
+   * Прокрутка живёт на общем контейнере, а не на самом экране, поэтому
+   * при переходе она оставалась там, где её бросили: уйдя из середины
+   * настроек, человек попадал в середину следующей страницы — мимо
+   * заголовка и мимо начала текста, будто половину уже пролистал.
+   *
+   * `scrollKey` — сам экран, а не вкладка внизу: настройки и дневник
+   * висят на одной вкладке, и по ней переход между ними не виден.
+   */
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [scrollKey]);
+
   return (
     <div className="mobile-shell">
       {/* Логотип занимает свободный центр верхней полосы Telegram. */}
@@ -38,7 +56,7 @@ export function MobileShell({
 
       {statusStrip}
 
-      <main className={`mobile-shell__main ${fixed ? 'mobile-shell__main--fixed' : ''}`}>
+      <main ref={mainRef} className={`mobile-shell__main ${fixed ? 'mobile-shell__main--fixed' : ''}`}>
         {children}
       </main>
 
