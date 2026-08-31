@@ -733,6 +733,8 @@ export function useDeck({
      * а не на каждом рендере колоды.
      */
     catalog: () => poolRef.current?.all ?? [],
+    /** Каталог отдан запасным путём: часть фильтров применить было нечем. */
+    catalogDegraded: Boolean(poolRef.current?.degraded),
   };
 }
 

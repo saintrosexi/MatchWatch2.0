@@ -16,6 +16,8 @@ import { COLD_START_IDS } from '../../shared/config/coldStart.js';
 
 export class CatalogPool {
   constructor({ filters = {}, onUpdate, seeds = [] } = {}) {
+    /** Каталог пришёл в урезанном виде — см. `loadMore`. */
+    this.degraded = false;
     this.filters = filters;
     this.onUpdate = onUpdate;
     /**
@@ -95,6 +97,13 @@ export class CatalogPool {
 
       this.page = payload.page ?? next;
       this.totalPages = payload.totalPages ?? 1;
+      /*
+       * Каталог отдан запасным путём: у TMDB лежит `discover`, и часть
+       * условий отбора применить было нечем. Человеку об этом надо
+       * сказать — иначе он видит, что фильтры не сработали, и делает
+       * вывод, что сломались мы.
+       */
+      this.degraded = Boolean(payload.degraded);
 
       let added = 0;
       for (const title of payload.titles ?? []) {

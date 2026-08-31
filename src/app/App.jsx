@@ -1076,6 +1076,7 @@ export default function App() {
 
   const statusStrip = renderStatus({
     online, room, roomSession, deckMode, auth, pendingWrites,
+    catalogDegraded: deck.catalogDegraded,
     onOpenRoom: () => navigate(VIEW.ROOMS),
   });
 
@@ -1460,7 +1461,7 @@ function renderView(ctx) {
 }
 
 /** Строка состояния: сеть, комната, режим колоды. Молчание — худший UX. */
-function renderStatus({ online, room, roomSession, deckMode, auth, pendingWrites, onOpenRoom }) {
+function renderStatus({ online, room, roomSession, deckMode, auth, pendingWrites, catalogDegraded, onOpenRoom }) {
   /*
    * У каждой строки свой ключ: он же ключ React-элемента. Смена ключа
    * пересоздаёт компонент, а вместе с ним и состояние «закрыто» —
@@ -1480,6 +1481,21 @@ function renderStatus({ online, room, roomSession, deckMode, auth, pendingWrites
     return (
       <StatusStrip key="pending" tone="warn" dismissible={false}>
         Досылаем {pendingWrites} {pendingWrites === 1 ? 'отметку' : 'отметок'} в базу…
+      </StatusStrip>
+    );
+  }
+  /*
+   * Каталог отдан запасным путём.
+   *
+   * Стоит выше ошибок комнаты, но ниже сети и недоставленных отметок:
+   * те про потерю данных, а это про качество подборки. Молчать нельзя —
+   * человек видит, что фильтры не сработали, и винит нас, а не TMDB.
+   */
+  if (catalogDegraded) {
+    return (
+      <StatusStrip key="catalog-degraded" tone="warn">
+        У TMDB сейчас сбой. Кино показываем, но подборка грубее обычного
+        и часть фильтров могла не примениться.
       </StatusStrip>
     );
   }
