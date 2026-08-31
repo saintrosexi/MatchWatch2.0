@@ -16,8 +16,8 @@ import {
   shareViaInlineQuery,
 } from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
-import { trackMetric } from '../../lib/telemetry.js';
-import { METRIC } from '../../../shared/telemetry/events.js';
+import { trackBusiness, trackMetric } from '../../lib/telemetry.js';
+import { BIZ, LEVEL, METRIC, MODULE } from '../../../shared/telemetry/events.js';
 import { sfx } from '../../lib/sound.js';
 import { requestFriend } from '../../engine/social.js';
 import { MoodPicker } from './MoodPicker.jsx';
@@ -289,7 +289,23 @@ function RoomLobby({
 
     try {
       const prepared = await api.prepareShare('room_invite', initData, { code: room.code });
-      if (!prepared?.id) return false;
+
+      if (!prepared?.id) {
+        /*
+         * Подготовить сообщение не вышло. Дальше по цепочке есть чем
+         * поделиться, но причину надо знать: без неё следующий разговор
+         * про «опять закрывается» снова начнётся с догадок.
+         */
+        trackBusiness(BIZ.OFFLINE_DEGRADED, {
+          module: MODULE.SHARE,
+          level: LEVEL.INFO,
+          context: {
+            missingFeature: 'savePreparedInlineMessage',
+            reason: String(prepared?.description ?? prepared?.reason ?? 'unknown').slice(0, 200),
+          },
+        });
+        return false;
+      }
 
       const sent = await sharePreparedMessage(prepared.id);
       if (sent) {
