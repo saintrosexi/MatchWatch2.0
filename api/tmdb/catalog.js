@@ -41,6 +41,21 @@ const RELATED = {
   recommendations: 'recommendations',
 };
 
+/**
+ * Куда идём, когда `discover` лежит.
+ *
+ * У TMDB ручки падают поодиночке: 31.08.2026 `discover/movie` отдавал
+ * 500 «Internal error», а `trending`, `popular` и даже `discover/tv`
+ * работали. Приложение при этом показывало «Каталог TMDB недоступен»
+ * и пустой экран — на одной сломанной ручке держалась вся лента.
+ *
+ * Эти списки не принимают фильтры, поэтому отбор по жанру, году
+ * и рейтингу делается уже над ответом. Длительность отфильтровать
+ * нечем: её в списочных ответах нет. Лента получается грубее — но
+ * лента, а не экран с ошибкой.
+ */
+const FALLBACK_LISTS = ['/trending/movie/week', '/movie/popular', '/movie/top_rated'];
+
 const SORTS = {
   popularity: 'popularity.desc',
   rating: 'vote_average.desc',
@@ -133,8 +148,23 @@ export default withHandler({ methods: ['GET'], module: MODULE.TMDB_PROXY, cacheS
   const key = `catalog/lists/${cacheKeyFor(relatedTo ? `${list}-${relatedTo}` : list, params)}`;
 
   const { value, source } = await cached(key, TTL.LIST, async () => {
-    const [payload, imageBase] = await Promise.all([tmdbFetch(path, params), getImageBase()]);
-    const results = assertNonEmpty(payload?.results ?? [], { path, params });
+    const [{ payload, degraded }, imageBase] = await Promise.all([
+      fetchList({ isDiscover, path, params, page, language }),
+      getImageBase(),
+    ]);
+
+    const fetched = assertNonEmpty(payload?.results ?? [], { path, params });
+    /*
+     * В запасном режиме условия приходится применять руками: списочные
+     * ручки их не принимают. Если после отбора почти ничего не осталось,
+     * отдаём как есть — редкий фильтр не повод показать пустой экран
+     * поверх и без того сломанного каталога.
+     */
+    const narrowed = degraded
+      ? fetched.filter((r) => matchesFilters(r, { genres, yearFrom, yearTo, minRating }))
+      : fetched;
+    const results = degraded && narrowed.length < 5 ? fetched : narrowed;
+
     const titles = results
       .filter(isReleased)
       .map((raw) => normalizeTmdbMovie(raw, { imageBase }))
@@ -147,6 +177,7 @@ export default withHandler({ methods: ['GET'], module: MODULE.TMDB_PROXY, cacheS
     storeTitles(titles);
 
     return {
+      degraded,
       titles,
       page: payload?.page ?? page,
       totalPages: Math.min(payload?.total_pages ?? 1, 500),
@@ -179,4 +210,56 @@ async function withMarkup(titles) {
     const withModel = markup.has(title.id) ? applyMarkup(title, markup.get(title.id)) : title;
     return curated.has(title.id) ? applyCurated(withModel, curated.get(title.id)) : withModel;
   });
+}
+
+/**
+ * Забирает список, переживая падение `discover`.
+ *
+ * Попыток на `discover` намеренно МЕНЬШЕ обычного: при лежащей ручке
+ * каждая стоит несколько секунд, и полный круг повторов складывался
+ * в восемнадцать секунд ожидания перед экраном с ошибкой. Быстрее
+ * признать, что ручка не отвечает, и взять живой список: человеку
+ * нужна лента, а не наша настойчивость.
+ */
+async function fetchList({ isDiscover, path, params, page, language }) {
+  if (!isDiscover) return { payload: await tmdbFetch(path, params), degraded: false };
+
+  try {
+    return { payload: await tmdbFetch(path, params, { retries: 1 }), degraded: false };
+  } catch (error) {
+    for (const fallback of FALLBACK_LISTS) {
+      try {
+        const payload = await tmdbFetch(fallback, { page, language }, { retries: 1 });
+        if (payload?.results?.length) return { payload, degraded: true };
+      } catch {
+        /* Пробуем следующий: лёг весь TMDB — тогда честно упадём ниже. */
+      }
+    }
+    throw error;
+  }
+}
+
+/**
+ * Условия отбора поверх готового списка.
+ *
+ * Только то, что есть в списочном ответе: жанры, дата выхода, оценка.
+ * Длительности там нет, и делать вид, что мы её учли, нельзя.
+ *
+ * Жанры совпадают ПО ВСЕМ запрошенным, как в `discover` с перечислением
+ * через запятую: иначе «драма + детектив» превратилось бы в «драма или
+ * детектив» и человек получил бы не то, что просил.
+ */
+export function matchesFilters(raw, { genres = [], yearFrom, yearTo, minRating } = {}) {
+  if (genres.length) {
+    const ids = new Set((raw.genre_ids ?? []).map(String));
+    if (!genres.every((g) => ids.has(String(g)))) return false;
+  }
+
+  const year = Number((raw.release_date ?? '').slice(0, 4));
+  if (yearFrom && !(year >= yearFrom)) return false;
+  if (yearTo && !(year <= yearTo)) return false;
+
+  if (minRating && !((raw.vote_average ?? 0) >= minRating)) return false;
+
+  return true;
 }

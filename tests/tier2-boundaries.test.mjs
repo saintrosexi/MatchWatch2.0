@@ -1186,3 +1186,29 @@ test('B56 · «мимо» и «нравится» доезжают до наст
   assert.notEqual(ACTION.LATER, 'dislike');
   assert.notEqual(ACTION.WATCHED, 'dislike');
 });
+
+test('B57 · запасной отбор каталога повторяет условия discover, а не смягчает их', async () => {
+  const { matchesFilters } = await import('../api/tmdb/catalog.js');
+
+  const film = { genre_ids: [18, 80], release_date: '2014-05-01', vote_average: 7.4 };
+
+  assert.ok(matchesFilters(film, {}), 'без условий проходит всё');
+
+  /*
+   * Жанры совпадают ПО ВСЕМ запрошенным, как в discover с перечислением
+   * через запятую. «Или» вместо «и» вернуло бы человеку не то, что он
+   * просил, и выглядело бы как сломанный фильтр, а не как запасной режим.
+   */
+  assert.ok(matchesFilters(film, { genres: ['18', '80'] }), 'оба жанра на месте');
+  assert.ok(!matchesFilters(film, { genres: ['18', '27'] }), 'одного жанра не хватает — не подходит');
+
+  assert.ok(!matchesFilters(film, { yearFrom: 2015 }), 'вышел раньше нижней границы');
+  assert.ok(!matchesFilters(film, { yearTo: 2013 }), 'вышел позже верхней границы');
+  assert.ok(matchesFilters(film, { yearFrom: 2010, yearTo: 2020 }), 'попадает в диапазон');
+
+  assert.ok(!matchesFilters(film, { minRating: 8 }), 'оценка ниже требуемой');
+  assert.ok(matchesFilters(film, { minRating: 7 }), 'оценка проходит');
+
+  // Без даты выхода год неизвестен: под ограничение по годам он не проходит.
+  assert.ok(!matchesFilters({ genre_ids: [18] }, { yearFrom: 2000 }));
+});
