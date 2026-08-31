@@ -1422,7 +1422,6 @@ function renderView(ctx) {
     case VIEW.SETTINGS:
       return (
         <SettingsView
-          user={sessionUser}
           profile={userState?.profile}
           access={userState?.access}
           prefs={prefs}
@@ -1435,8 +1434,6 @@ function renderView(ctx) {
           onPrefsChange={(patch) => setPrefs((p) => ({ ...p, ...patch }))}
           onLogout={auth.logout}
           onOpenFeedback={() => setFeedbackOpen(true)}
-          auth={auth}
-          toasts={toasts}
         />
       );
 

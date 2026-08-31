@@ -7,7 +7,6 @@ import { StatusStrip } from '../../ui/States.jsx';
 import { isBotStarted } from '../../engine/social.js';
 import { openTelegramLink } from '../../lib/telegram.js';
 import { ENV } from '../../lib/env.js';
-import { TelegramLinkCard } from './TelegramLinkCard.jsx';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
@@ -26,9 +25,9 @@ import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.
  * оформление правят часто, выходят из аккаунта раз в жизни.
  */
 export function SettingsView({
-  user, profile, prefs, access, premium,
+  profile, prefs, access, premium,
   onBack, onEditProfile, onEditShowcase, onOpenPremium, onOpenDashboard,
-  onPrefsChange, onLogout, onOpenFeedback, auth, toasts,
+  onPrefsChange, onLogout, onOpenFeedback,
 }) {
   const { price, promo } = PREMIUM_CONFIG;
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
@@ -166,24 +165,6 @@ export function SettingsView({
           </div>
         </div>
       </section>
-
-      {/* ── Вход ──────────────────────────────────────────────── */}
-      {/*
-        * Карточке нужны разобранные поля, а не объект `auth` целиком.
-        * При переносе экрана сюда уехал `auth={auth}` — и карточка,
-        * не найдя ни `links`, ни `inTelegram`, честно писала «не привязан»
-        * даже тому, кто зашёл из самого Mini App.
-        */}
-      {auth && (
-        <TelegramLinkCard
-          user={user}
-          links={auth.links}
-          inTelegram={auth.inTelegram}
-          onLink={auth.linkTelegram}
-          onUnlink={auth.unlinkTelegram}
-          toast={toasts}
-        />
-      )}
 
       {/* ── Импорт ────────────────────────────────────────────── */}
       <section className="section">
