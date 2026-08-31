@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Crown, ShoppingCart, Sparkles, Star } from '../../ui/icons.js';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { trackMetric } from '../../lib/telemetry.js';
-import { getInitData, openTelegramLink, requestWriteAccess } from '../../lib/telegram.js';
+import { getInitData, requestWriteAccess } from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
 import { METRIC } from '../../../shared/telemetry/events.js';
 import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
@@ -36,9 +36,13 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
    * Сообщение решает это целиком: приложение не закрывается, ссылка
    * лежит в чате, по ней можно нажать когда угодно и вернуться позже.
    *
-   * Порядок попыток: сообщение → если писать нельзя, спрашиваем
-   * разрешение и пробуем снова → и только если и это не вышло,
-   * открываем ссылку, предупредив, что приложение закроется.
+   * Родное окно «поделиться» (`shareMessage`) здесь не подходит и это
+   * не упущение: оно отправляет сообщение ДРУГОМУ человеку, а обменник
+   * человек открывает себе. Отсюда и разница с приглашением в комнату.
+   *
+   * Порядок попыток: сообщение от бота → если писать нельзя, спрашиваем
+   * разрешение и пробуем снова → копия ссылки. Приложение не
+   * закрывается ни на одном из шагов.
    */
   const openStarsShop = async () => {
     if (sendingLink) return;
@@ -74,20 +78,25 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
   };
 
   /*
-   * Запасной путь: старое поведение, но со словами.
+   * Запасной путь: копия ссылки, без закрытия приложения.
    *
-   * Ссылку кладём в буфер до перехода — если чат не откроется,
-   * у человека на руках останется адрес, который достаточно вставить
-   * в поиск Telegram.
+   * Раньше отсюда открывался `openTelegramLink`, и он Mini App
+   * закрывает. Для приглашения в комнату мы от этого уже отказались,
+   * и здесь причина та же: человек нажал одну кнопку в витрине
+   * подписки — выбрасывать его из витрины за это нельзя, тем более
+   * что он собирался платить.
+   *
+   * Ссылка в буфере решает задачу целиком: обменник ищется вставкой
+   * в поиск Telegram, а витрина остаётся на месте.
    */
   const fallbackToLink = async () => {
     try {
       await navigator.clipboard?.writeText(starsShop.url);
+      toasts?.push?.('Ссылка на обменник скопирована — вставьте её в поиск Telegram');
     } catch {
-      /* Буфер может быть недоступен; это не повод не открывать ссылку. */
+      /* Буфера нет — тогда ссылка остаётся видимой строкой ниже. */
+      toasts?.error?.(`Не удалось скопировать. Обменник: ${starsShop.url}`);
     }
-    toasts?.push?.('Ссылка скопирована. Открываем Telegram — приложение закроется.');
-    openTelegramLink(starsShop.url);
   };
 
   useEffect(() => {
@@ -225,7 +234,7 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           <b>Карту привязывать не нужно.</b> Оплата проходит внутри Telegram
           звёздами, и подписка не продлевается сама: когда месяц кончится,
           мы просто спросим ещё раз. Оплата картой появится позже.
-          {' '}{starsShop.note} Ссылку пришлёт бот в Telegram — приложение
+          {' '}{starsShop.note} Ссылку пришлёт бот в Telegram — витрина
           при этом не закроется.
         </p>
       </div>
