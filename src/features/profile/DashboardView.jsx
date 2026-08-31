@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, RefreshCw } from '../../ui/icons.js';
 import { api } from '../../lib/api.js';
 import { ErrorState, LoadingState } from '../../ui/States.jsx';
-import { loadLocal, saveLocal, STORAGE_KEYS } from '../../lib/storage.js';
 
 /**
  * Минимальный дашборд продуктовых метрик.
@@ -12,7 +11,6 @@ import { loadLocal, saveLocal, STORAGE_KEYS } from '../../lib/storage.js';
  * пользователя и топ ошибок, чтобы чинить по частоте, а не по ощущениям.
  */
 export function DashboardView({ onBack }) {
-  const [token, setToken] = useState(() => loadLocal(STORAGE_KEYS.OPS_TOKEN, ''));
   const [days, setDays] = useState(14);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,15 +20,24 @@ export function DashboardView({ onBack }) {
     setLoading(true);
     setError(null);
     try {
-      const payload = await api.metrics(days, token || undefined);
+      /*
+       * Без токена: владелец открывает дашборд своей же учёткой,
+       * по признаку `is_ops` в профиле. Поле для токена стояло здесь
+       * с тех пор, когда другого способа не было, и приглашало ввести
+       * то, чего у владельца никогда не было на руках, — из-за него
+       * дашборд и выглядел неработающим.
+       *
+       * Сам токен как запасной путь для внешнего дашборда остался
+       * на стороне API — просто в приложении он не нужен.
+       */
+      const payload = await api.metrics(days);
       setData(payload);
-      if (token) saveLocal(STORAGE_KEYS.OPS_TOKEN, token);
     } catch (e) {
       setError({ text: e?.message ?? 'Не удалось загрузить метрики', retryable: true });
     } finally {
       setLoading(false);
     }
-  }, [days, token]);
+  }, [days]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -43,7 +50,7 @@ export function DashboardView({ onBack }) {
       </button>
 
       <header className="view__head">
-        <h1 className="view__title">Метрики</h1>
+        <h1 className="view__title">Дашборд</h1>
         <p className="view__sub">Окружение: {data?.env ?? '—'} · период {days} дн.</p>
       </header>
 
@@ -58,16 +65,8 @@ export function DashboardView({ onBack }) {
             {d} дн
           </button>
         ))}
-        <input
-          className="input"
-          style={{ minHeight: 34, flex: 1 }}
-          type="password"
-          placeholder="Токен дашборда"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          aria-label="Токен доступа к дашборду"
-        />
-        <button type="button" className="btn btn--ghost btn--sm" onClick={load}>
+        <span className="grow" />
+        <button type="button" className="btn btn--ghost btn--sm" onClick={load} aria-label="Обновить">
           <RefreshCw size={16} />
         </button>
       </div>

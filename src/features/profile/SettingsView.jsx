@@ -294,9 +294,17 @@ export function SettingsView({
       </section>
 
       <div className="row row--wrap gap-3">
-        {onOpenDashboard && (
+        {/*
+          * Дашборд видит только владелец.
+          *
+          * Раньше кнопка стояла у всех, а сервер отвечал 403: человек
+          * жал на неё и получал отказ за то, что нажал на предложенное.
+          * Признак `is_ops` приходит в профиле и с клиента не меняется —
+          * права на запись в эту колонку у роли нет.
+          */}
+        {onOpenDashboard && profile?.is_ops && (
           <button type="button" className="btn btn--ghost" onClick={onOpenDashboard}>
-            <BarChart3 size={16} /> Метрики
+            <BarChart3 size={16} /> Дашборд
           </button>
         )}
         <button type="button" className="btn btn--ghost btn--danger grow" onClick={onLogout}>

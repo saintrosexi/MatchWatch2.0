@@ -208,6 +208,22 @@ export const TEXTS = {
     + `Комната <b>${esc(code)}</b> — свайпаете каждый со своего телефона, `
     + 'а приложение покажет, на чём вы сошлись.',
 
+  /**
+   * Сообщение в поддержку — владельцу.
+   *
+   * Текст приводим целиком, а не «пришёл новый отзыв»: уведомление,
+   * ради которого надо куда-то идти читать, откладывается и теряется.
+   * Имя и ник рядом, чтобы можно было ответить человеку лично, — ради
+   * этого отзыв и собирают.
+   */
+  feedbackReceived: ({ name, username, body, screen, release }) => {
+    const who = username ? `<b>${esc(name)}</b> (@${esc(username)})` : `<b>${esc(name)}</b>`;
+    const where = [screen, release].filter(Boolean).map(esc).join(' · ');
+
+    return `✉️ ${who} пишет:\n\n<blockquote>${esc(body)}</blockquote>`
+      + (where ? `\n\n<i>${where}</i>` : '');
+  },
+
   /* ── Оплата ── */
 
   /**

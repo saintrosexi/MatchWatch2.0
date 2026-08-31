@@ -200,5 +200,47 @@ async function render(row) {
     };
   }
 
+  if (row.kind === 'feedback') {
+    /*
+     * Текст отзыва читаем из таблицы, а не из очереди: в очереди лежит
+     * только ссылка на него. Одна копия — значит, письмо и дашборд
+     * не могут показать разное.
+     */
+    const feedback = await feedbackById(payload.feedback);
+    if (!feedback?.body) return null;
+
+    const author = await profileOf(payload.from);
+    const context = feedback.context ?? {};
+
+    return {
+      text: TEXTS.feedbackReceived({
+        name: author?.display_name || author?.username || 'Аноним',
+        username: author?.username ?? null,
+        body: feedback.body,
+        screen: context.screen ?? null,
+        release: context.release ?? null,
+      }),
+      keyboard: openAppButton('Открыть дашборд'),
+    };
+  }
+
   return null;
+}
+
+/** Один отзыв целиком — по идентификатору из очереди. */
+async function feedbackById(id) {
+  if (!id) return null;
+  const rows = await sbSelect('feedback', {
+    select: 'body,context', id: `eq.${id}`, limit: 1,
+  });
+  return rows?.[0] ?? null;
+}
+
+/** Имя и ник автора — чтобы владелец мог ответить человеку лично. */
+async function profileOf(userId) {
+  if (!userId) return null;
+  const rows = await sbSelect('profiles', {
+    select: 'display_name,username', id: `eq.${userId}`, limit: 1,
+  });
+  return rows?.[0] ?? null;
 }
