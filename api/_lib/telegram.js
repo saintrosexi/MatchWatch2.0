@@ -62,6 +62,17 @@ export async function describeBot() {
       result.tokenValid = true;
       result.username = payload.result?.username ?? null;
       result.botId = String(payload.result?.id ?? result.botId ?? '');
+      /*
+       * Инлайн-режим включается у бота вручную, в BotFather, и никак
+       * не следует из наличия токена. Без него `switchInlineQuery`
+       * молча не срабатывает, и приглашение уходит запасным путём —
+       * через ссылку, которая ЗАКРЫВАЕТ Mini App. Со стороны это
+       * выглядит как «раньше открывалась менюшка, а теперь выкидывает».
+       *
+       * Поэтому состояние видно в диагностике: это разница между
+       * «мы сломали» и «выключен тумблер у бота».
+       */
+      result.supportsInline = Boolean(payload.result?.supports_inline_queries);
     } else {
       result.error = payload?.description ?? `getMe -> ${res.status}`;
     }

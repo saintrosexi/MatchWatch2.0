@@ -168,6 +168,16 @@ async function diagnostics() {
       botUsername: bot.username ?? null,
       expectedBotUsername: expected,
       botMismatch: mismatch,
+      /*
+       * Инлайн-режим. От него зависит, откроется ли родной выбор чата
+       * ПОВЕРХ Mini App или приглашение уйдёт ссылкой, закрыв приложение.
+       */
+      supportsInline: Boolean(bot.supportsInline),
+      ...(bot.tokenValid && !bot.supportsInline ? {
+        inlineHint: 'Инлайн-режим у бота выключен: @BotFather → /setinline → '
+          + `@${actual ?? 'бот'} → любая подсказка. Без него приглашения `
+          + 'и «поделиться» закрывают Mini App вместо родного выбора чата.',
+      } : {}),
       ...(mismatch ? {
         hint: `TELEGRAM_BOT_TOKEN принадлежит @${actual}, а Mini App настроен на @${expected}. `
           + 'Подпись initData с таким сочетанием не сойдётся никогда — '
