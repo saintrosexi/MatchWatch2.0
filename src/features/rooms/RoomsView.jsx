@@ -7,6 +7,7 @@ import { listNames } from '../../../shared/i18n/plural.js';
 import { EmptyState, StatusStrip } from '../../ui/States.jsx';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { RoomChat } from './RoomChat.jsx';
+import { InviteFriends } from './InviteFriends.jsx';
 import { loadRecentRooms } from '../../engine/userData.js';
 import { normalizeRoomCode, ROOM_CODE_LENGTH } from '../../../shared/model/roomCode.js';
 import { JOIN_SOURCE } from '../../engine/rooms.js';
@@ -447,6 +448,15 @@ function RoomLobby({
         onChange={room.setMood}
         disabled={hasDeck}
       />
+
+      {/*
+        * Позвать своих — рядом с кодом, а не вместо него.
+        *
+        * Код нужен тем, у кого приложения ещё нет; друзьям внутри он
+        * не нужен вовсе, и заставлять их вводить пять цифр, когда мы
+        * знаем, кого зовут, — лишний шаг на ровном месте.
+        */}
+      <InviteFriends code={room.code} members={room.members} toasts={toasts} />
 
       {/*
         * Разговор перед стартом — свёрнутой полосой.

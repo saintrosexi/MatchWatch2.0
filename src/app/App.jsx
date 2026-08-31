@@ -19,6 +19,7 @@ import { FeedModeSwitch } from '../features/deck/FeedModeSwitch.jsx';
 import { DeckCoach, coachSeen } from '../features/deck/DeckCoach.jsx';
 import { VaultView } from '../features/vault/VaultView.jsx';
 import { loadFriends } from '../engine/social.js';
+import { inviteFriendToRoom } from '../engine/rooms.js';
 import { PremiumSheet } from '../features/premium/PremiumSheet.jsx';
 import { usePremium } from '../hooks/usePremium.js';
 import { NewsScreen } from '../features/news/NewsScreen.jsx';
@@ -858,6 +859,26 @@ export default function App() {
 
   const [deckBuilding, setDeckBuilding] = useState(false);
 
+  /**
+   * Позвать друга смотреть — с его страницы или из комнаты.
+   *
+   * Комнату заводим на месте, если её ещё нет: человек нажал «позвать
+   * смотреть», и отправлять его сначала создавать комнату значит
+   * прервать ровно то действие, которое он начал.
+   */
+  const inviteFriendToWatch = useCallback(async (person) => {
+    try {
+      const code = room.code ?? await createRoom();
+      if (!code) return;
+      await inviteFriendToRoom(code, person.id);
+      toasts.success(`Позвали ${person.displayName} в комнату ${code}`);
+      setRoomSession(true);
+      setView(VIEW.ROOMS);
+    } catch (error) {
+      toasts.error(error?.message ?? 'Не получилось позвать');
+    }
+  }, [room.code, createRoom, toasts]);
+
   /** Собрать общую колоду по вкусам всех, кто сейчас в комнате. */
   const buildSharedDeck = useCallback(async () => {
     if (!room.code || deckBuilding) return;
@@ -1043,7 +1064,7 @@ export default function App() {
     view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
     setView, setPrefs, setActorDeck, setRoomSession, setDetailsEntry, setPremiumOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
-    handleRemoveFavorite, handleUndoFromList, auth,
+    handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
     desktopShell: platform.shell === 'desktop',
     buildSharedDeck, deckBuilding,
@@ -1304,7 +1325,7 @@ function renderView(ctx) {
     view, room, sessionUser, userState, taste, prefs, toasts, history, premium, friendIds,
     setView, setPrefs, setRoomSession, setDetailsEntry, setActorDeck, setPremiumOpen,
     focusPerson, createRoom, startActorDeck, handleToggleWatched,
-    handleRemoveFavorite, handleUndoFromList, auth,
+    handleRemoveFavorite, handleUndoFromList, inviteFriendToWatch, auth,
     setEditorOpen, setShowcaseOpen, publicProfile, setPublicProfile, meTab, collectionSection,
     desktopShell, buildSharedDeck, deckBuilding,
   } = ctx;
@@ -1359,6 +1380,7 @@ function renderView(ctx) {
       return (
         <PublicProfileView
           onOpenPremium={() => setPremiumOpen(true)}
+          onInviteToRoom={inviteFriendToWatch}
           username={typeof publicProfile === 'string' ? publicProfile : null}
           userId={typeof publicProfile === 'object' ? publicProfile?.uid : null}
           toasts={toasts}

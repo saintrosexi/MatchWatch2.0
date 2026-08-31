@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Bookmark, Check, Crown, Heart, Pencil, Star, UserPlus, UserRound } from '../../ui/icons.js';
+import {
+  ArrowLeft, Bookmark, Check, Crown, Heart, Pencil, Star, UserPlus, UserRound, Users,
+} from '../../ui/icons.js';
 import { EmptyState, ErrorState, LoadingState } from '../../ui/States.jsx';
 import { Poster } from '../../ui/Poster.jsx';
 import { Sheet } from '../../ui/Sheet.jsx';
@@ -27,8 +29,11 @@ export function PublicProfileView({
   username, userId, onBack, onOpenTitle, onEditShowcase, toasts,
   /** Нажатие на значок премиума открывает витрину подписки. */
   onOpenPremium,
+  /** Позвать этого человека в комнату. Только для друзей. */
+  onInviteToRoom,
 }) {
   const [state, setState] = useState({ loading: true });
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -256,7 +261,28 @@ export function PublicProfileView({
           <Pencil size={16} /> Настроить витрину
         </button>
       ) : (
-        <FriendButton person={person} toasts={toasts} />
+        <>
+          {/*
+            * Позвать смотреть — только друзьям и только со страницы
+            * человека. Здесь это уместнее всего: только что стало видно,
+            * сколько у вас общего, и следующий вопрос ровно один —
+            * «а посмотрим вместе?».
+            */}
+          {person.friendship === 'friends' && onInviteToRoom && (
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={inviting}
+              onClick={async () => {
+                setInviting(true);
+                try { await onInviteToRoom(person); } finally { setInviting(false); }
+              }}
+            >
+              <Users size={16} /> {inviting ? 'Зовём…' : 'Позвать смотреть'}
+            </button>
+          )}
+          <FriendButton person={person} toasts={toasts} />
+        </>
       )}
     </div>
   );

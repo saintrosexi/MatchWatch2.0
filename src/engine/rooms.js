@@ -263,6 +263,26 @@ function shapeState(code, room, members, swipes, matches, watchlist) {
  * канал сам уберёт участника при обрыве связи, чего колонка не умеет —
  * упавший клиент навсегда остался бы «в сети».
  */
+/**
+ * Зовёт друга в комнату изнутри приложения.
+ *
+ * Не то же самое, что ссылка-приглашение: ссылку кидают кому угодно,
+ * а здесь зовут конкретного человека из друзей — ему приходит
+ * уведомление с кнопкой прямо в комнату, без ввода кода.
+ */
+export async function inviteFriendToRoom(code, friendId) {
+  const normalized = normalizeRoomCode(code);
+  if (!normalized || !friendId) return false;
+
+  await guarded(
+    () => supabase.rpc('invite_to_room', { p_code: normalized, p_friend: friendId }),
+    { module: MODULE.ROOMS_JOIN, roomCode: normalized, description: 'invite friend to room' },
+  );
+
+  trackMetric(METRIC.ROOM_INVITE_SENT, { room: normalized, context: { channel: 'friend' } });
+  return true;
+}
+
 /** Набор быстрых реакций. Больше — уже меню, а не реакция. */
 export const ROOM_REACTIONS = Object.freeze([
   { key: 'go', emoji: '🔥', label: 'го' },

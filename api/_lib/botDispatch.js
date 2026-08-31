@@ -177,6 +177,20 @@ async function render(row) {
     };
   }
 
+  if (row.kind === 'room_invite') {
+    const code = String(payload.code ?? '').trim();
+    if (!code) return null;
+    /*
+     * Кнопка ведёт СРАЗУ в комнату по коду — вводить его руками
+     * не нужно. Ради этого приглашение изнутри приложения и делалось:
+     * ссылку и так можно переслать, а тут зовут конкретного человека.
+     */
+    return {
+      text: TEXTS.roomInvite(await displayName(payload.from), code),
+      keyboard: openAppButton(`Войти в комнату ${code}`, { startParam: code }),
+    };
+  }
+
   if (row.kind === 'watchlist_digest') {
     const titles = Array.isArray(payload.titles) ? payload.titles : [];
     if (!titles.length) return null;
