@@ -56,15 +56,6 @@ export function ShowcaseEditor({
   /* Потолок визитки — из конфига подписки, а не из константы файла. */
   const pinLimit = pinLimitFor({ premium });
 
-  /*
-   * Закреплённые в порядке закрепления — они же кандидаты в обложку.
-   * Порядок сохраняем: он и есть порядок визитки на странице.
-   */
-  const heroOptions = useMemo(
-    () => form.pinnedIds.map((id) => options.find((o) => o.id === id)).filter(Boolean),
-    [form.pinnedIds, options],
-  );
-
   useEffect(() => {
     if (!open) return;
     setForm({
@@ -86,6 +77,15 @@ export function ShowcaseEditor({
   const options = useMemo(
     () => Object.values(favorites).sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0)),
     [favorites],
+  );
+
+  /*
+   * Закреплённые в порядке закрепления — они же кандидаты в обложку.
+   * Порядок сохраняем: он и есть порядок визитки на странице.
+   */
+  const heroOptions = useMemo(
+    () => form.pinnedIds.map((id) => options.find((o) => o.id === id)).filter(Boolean),
+    [form.pinnedIds, options],
   );
 
   const togglePin = (id) => setForm((f) => {

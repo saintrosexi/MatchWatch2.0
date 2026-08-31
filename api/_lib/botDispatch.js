@@ -17,6 +17,7 @@ import { sbSelect, sbUpdate, hasServiceKey } from './supabaseAdmin.js';
 import { sendMessage, openAppButton, isFatalSendError, TEXTS } from './botApi.js';
 import { logError, logMetric } from './telemetry.js';
 import { LEVEL, METRIC, MODULE } from '../../shared/telemetry/events.js';
+import { DESTINATION } from '../../shared/model/startParam.js';
 import { timingSafeEqual } from 'node:crypto';
 
 /** Сколько раз пробуем доставить, прежде чем сдаться. */
@@ -163,9 +164,16 @@ async function render(row) {
   }
 
   if (row.kind === 'friend_accepted') {
+    /*
+     * Кнопка ведёт СРАЗУ в комнаты, а не просто открывает приложение.
+     *
+     * «Теперь вы друзья» без следующего шага не меняет ничего: человек
+     * закрывает сообщение, и новый друг остаётся строкой в списке.
+     * Момент, когда позвать смотреть уместнее всего, — именно этот.
+     */
     return {
       text: TEXTS.friendAccepted(await displayName(payload.friend)),
-      keyboard: openAppButton(),
+      keyboard: openAppButton('Позвать смотреть кино', { startParam: DESTINATION.ROOMS }),
     };
   }
 

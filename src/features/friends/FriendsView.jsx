@@ -4,7 +4,8 @@ import { EmptyState, LoadingState } from '../../ui/States.jsx';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { Poster } from '../../ui/Poster.jsx';
 import {
-  acceptFriend, loadFriends, loadSharedWatchlist, removeFriend, requestFriend, searchPeople,
+  acceptFriend, loadFriends, loadSuggestedFriends, loadSharedWatchlist, removeFriend,
+  requestFriend, searchPeople,
 } from '../../engine/social.js';
 
 /**
@@ -19,6 +20,7 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
   const [query, setQuery] = useState('');
   const [found, setFound] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [suggested, setSuggested] = useState([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +29,11 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
       .then(setFriends)
       .catch(() => setFriends([]))
       .finally(() => setLoading(false));
+
+    /* Подсказки — украшение экрана, а не условие его работы. */
+    loadSuggestedFriends()
+      .then(setSuggested)
+      .catch(() => setSuggested([]));
   }, []);
 
   useEffect(refresh, [refresh]);
@@ -107,6 +114,43 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
           </button>
         )}
       </div>
+
+      {/*
+        * Подсказки по вкусу.
+        *
+        * Показываются, когда человек НЕ ищет: во время поиска он знает,
+        * кого хочет найти, и подсовывать ему других — мешать. Причина
+        * показа названа прямо числом общих любимых: без неё это просто
+        * список незнакомцев, который никто не открывает.
+        */}
+      {!query.trim() && suggested.length > 0 && (
+        <section className="section">
+          <h2 className="section__title">Похожий вкус</h2>
+          <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
+            Эти люди любят то же, что и вы. Телефонная книжка такого не знает.
+          </p>
+          <div className="stack gap-2">
+            {suggested.map((person) => (
+              <PersonRow
+                key={person.id}
+                person={person}
+                /* Коротко: строку сжимает кнопка справа, длинная фраза обрезается. */
+                subtitle={`${person.shared} общих любимых`}
+                onOpen={() => onOpenProfile(person.username)}
+                action={(
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--primary"
+                    onClick={() => act(requestFriend, person, `Заявка отправлена ${person.displayName}`)}
+                  >
+                    <UserPlus size={16} /> Добавить
+                  </button>
+                )}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {query.trim().length >= 3 && (
         <section className="section">
@@ -267,7 +311,11 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
   );
 }
 
-function PersonRow({ person, action, onOpen }) {
+/**
+ * @param subtitle заменяет ник, когда есть что сказать важнее ника —
+ *   например, сколько фильмов нравятся обоим.
+ */
+function PersonRow({ person, action, onOpen, subtitle }) {
   return (
     <div className="member">
       <button type="button" className="row gap-3 grow" style={{ minWidth: 0, textAlign: 'left' }} onClick={onOpen}>
@@ -276,7 +324,9 @@ function PersonRow({ person, action, onOpen }) {
           : <span className="member__avatar member__avatar--empty">{initials(person.displayName)}</span>}
         <span className="stack grow" style={{ minWidth: 0 }}>
           <span className="member__name truncate">{person.displayName}</span>
-          <span className="member__state truncate">@{person.username}</span>
+          <span className="member__state truncate">
+            {subtitle ?? `@${person.username}`}
+          </span>
         </span>
       </button>
       {action}

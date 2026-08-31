@@ -149,6 +149,24 @@ export async function loadFriends() {
   return (data ?? []).map(shapePerson);
 }
 
+/**
+ * Кого посоветовать в друзья — по пересечению любимого.
+ *
+ * Считает сервер: у него есть чужое избранное, у клиента его нет
+ * и быть не должно. Возвращает уже отфильтрованных — тех, с кем
+ * человек ещё не в друзьях и кому есть что показать.
+ */
+export async function loadSuggestedFriends(limit = 12) {
+  if (!supabaseReady()) return [];
+  const { data, error } = await supabase.rpc('suggested_friends', { p_limit: limit });
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    ...shapePerson(row),
+    /* Сколько любимых совпало — это и есть причина показать человека. */
+    shared: Number(row.shared_count ?? 0),
+  }));
+}
+
 export async function requestFriend(friendId) {
   const status = await guarded(
     () => supabase.rpc('request_friend', { p_friend: friendId }),
