@@ -23,8 +23,28 @@ import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft, busy, onActivate, onPurchase, toasts }) {
   const { price, promo, benefits, starsShop } = PREMIUM_CONFIG;
 
-  const openStarsShop = () => {
+  /*
+   * Переход к обменнику звёзд.
+   *
+   * `openTelegramLink` ЗАКРЫВАЕТ Mini App — это его штатное поведение,
+   * а не сбой. Но если клиент по какой-то причине не откроет чат, для
+   * человека остаётся только «приложение просто закрылось», и вернуться
+   * ему некуда: ссылку он больше не видит.
+   *
+   * Поэтому перед уходом кладём ссылку в буфер и говорим об этом. Даже
+   * в худшем случае у человека на руках есть адрес, который достаточно
+   * вставить в поиск Telegram.
+   */
+  const openStarsShop = async () => {
     trackMetric(METRIC.PREMIUM_VIEWED, { context: { action: 'stars_shop' } });
+
+    try {
+      await navigator.clipboard?.writeText(starsShop.url);
+      toasts?.push?.('Ссылка скопирована — открываем обменник');
+    } catch {
+      /* Буфер может быть недоступен; это не повод не открывать ссылку. */
+    }
+
     openTelegramLink(starsShop.url);
   };
 
@@ -158,7 +178,8 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           <b>Карту привязывать не нужно.</b> Оплата проходит внутри Telegram
           звёздами, и подписка не продлевается сама: когда месяц кончится,
           мы просто спросим ещё раз. Оплата картой появится позже.
-          {' '}{starsShop.note}
+          {' '}{starsShop.note} Если приложение закроется, а чат не откроется —
+          ссылка уже скопирована, вставьте её в поиск Telegram.
         </p>
       </div>
     </Sheet>

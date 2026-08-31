@@ -182,9 +182,20 @@ export async function loadSuggestedFriends(limit = 12) {
  * не даёт писать первым, а Mini App открывается мимо чата с ботом.
  */
 export async function isBotStarted() {
-  if (!supabaseReady()) return true; // без базы не пугаем зря
+  /*
+   * Три исхода, а не два: да, нет и «не знаем».
+   *
+   * Раньше при любом сбое возвращалось `true` — «бот запущен». Полоса
+   * с предупреждением исчезала, и человек считал, что уведомления
+   * работают, хотя мы этого не проверили. Ошибка сети превращалась
+   * в утверждение о доставке.
+   *
+   * `null` означает незнание. Молчать по незнанию правильно — пугать
+   * зря хуже, — но выдавать незнание за подтверждение нельзя.
+   */
+  if (!supabaseReady()) return null;
   const { data, error } = await supabase.rpc('bot_started');
-  if (error) return true;
+  if (error) return null;
   return Boolean(data);
 }
 
