@@ -32,6 +32,8 @@ export function DesktopStudio({
               key={item.key}
               type="button"
               className="studio__nav-item"
+              /* Якорь для обучающих подсказок — см. `DeckCoach`. */
+              data-coach={item.coach}
               /* Пункт может вести не во «вкладку», а в её часть — тогда
                  он сам знает, выбран ли, и сам решает, что открыть. */
               aria-current={(item.current ?? active === item.key) ? 'page' : undefined}

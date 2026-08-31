@@ -101,6 +101,8 @@ export function RoomsView({
       <button
         type="button"
         className="btn btn--primary btn--lg btn--block"
+        /* Якорь обучающих подсказок — см. `RoomsCoach`. */
+        data-coach="room-create"
         onClick={handleCreate}
         disabled={busy}
       >
@@ -111,6 +113,7 @@ export function RoomsView({
 
       <form
         className="section"
+        data-coach="room-join"
         onSubmit={(e) => { e.preventDefault(); if (normalized) handleJoin(normalized, JOIN_SOURCE.MANUAL); }}
       >
         {/* Цифровая клавиатура: код состоит только из цифр, и буквенная

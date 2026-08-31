@@ -16,7 +16,8 @@ import { FiltersSheet, DEFAULT_FILTERS } from '../features/deck/FiltersSheet.jsx
 import { RoomsView } from '../features/rooms/RoomsView.jsx';
 import { CollectionView } from '../features/collection/CollectionView.jsx';
 import { FeedModeSwitch } from '../features/deck/FeedModeSwitch.jsx';
-import { DeckCoach, coachSeen } from '../features/deck/DeckCoach.jsx';
+import { DeckCoach, deckCoachSeen } from '../features/deck/DeckCoach.jsx';
+import { RoomsCoach, roomsCoachSeen } from '../features/rooms/RoomsCoach.jsx';
 import { VaultView } from '../features/vault/VaultView.jsx';
 import { loadFriends } from '../engine/social.js';
 import { inviteFriendToRoom } from '../engine/rooms.js';
@@ -209,6 +210,8 @@ export default function App() {
    * уже на экране: объяснять жест, указывая на спиннер, бессмысленно.
    */
   const [coachOpen, setCoachOpen] = useState(false);
+  /* Своё состояние у каждого экрана: подсказки разные и живут порознь. */
+  const [roomsCoachOpen, setRoomsCoachOpen] = useState(false);
   const [taste, setTaste] = useState(createEmptyProfile);
 
   const [detailsEntry, setDetailsEntry] = useState(null);
@@ -644,10 +647,26 @@ export default function App() {
    * объяснять жест, указывая на спиннер, бессмысленно.
    */
   useEffect(() => {
-    if (coachSeen() || coachOpen) return;
+    if (deckCoachSeen() || coachOpen) return;
     if (view !== VIEW.DECK || deckMode !== DECK_MODE.SOLO || !deck.current) return;
     setCoachOpen(true);
   }, [view, deckMode, deck.current, coachOpen]);
+
+  /*
+   * Подсказки экрана «Вместе» — свои и после ленты.
+   *
+   * Ждём, пока человек пройдёт обучение на колоде: последний его шаг
+   * и приводит сюда. Показать раньше значит объяснить комнаты тому,
+   * кто ещё не понял, что вообще будет делать с карточками.
+   *
+   * Не поднимаются, когда человек уже в комнате: там объяснять
+   * создание и вход поздно.
+   */
+  useEffect(() => {
+    if (roomsCoachSeen() || roomsCoachOpen || coachOpen) return;
+    if (view !== VIEW.ROOMS || room.code || !deckCoachSeen()) return;
+    setRoomsCoachOpen(true);
+  }, [view, room.code, coachOpen, roomsCoachOpen]);
 
   /* ── Реакция на карточку ─────────────────────────────────────── */
   const handleDecision = useCallback(async (entry, action) => {
@@ -977,7 +996,7 @@ export default function App() {
   const nav = [
     { key: VIEW.DECK, label: 'Кино', icon: Flame },
     { key: VIEW.COLLECTION, label: 'Каталог', icon: Library },
-    { key: VIEW.ROOMS, label: 'Вместе', icon: Users, badge: room.onlineCount > 1 ? room.onlineCount : 0 },
+    { key: VIEW.ROOMS, label: 'Вместе', icon: Users, coach: 'rooms', badge: room.onlineCount > 1 ? room.onlineCount : 0 },
     { key: VIEW.MINE, label: 'Моё', icon: Bookmark, badge: pendingInRoom || mineCount },
     // Вместо иконки — аватар: собственное лицо узнаётся быстрее пиктограммы.
     { key: VIEW.ME, label: 'Я', icon: UserRound, avatar: sessionUser?.photoURL ?? null },
@@ -990,7 +1009,7 @@ export default function App() {
    */
   const desktopNav = [
     { key: VIEW.DECK, label: 'Кино', icon: Flame },
-    { key: VIEW.ROOMS, label: 'Вместе', icon: Users, badge: room.onlineCount > 1 ? room.onlineCount : 0 },
+    { key: VIEW.ROOMS, label: 'Вместе', icon: Users, coach: 'rooms', badge: room.onlineCount > 1 ? room.onlineCount : 0 },
     {
       key: 'collection-catalog', label: 'Каталог', icon: Library,
       current: view === VIEW.COLLECTION && collectionSection === 'catalog',
@@ -1187,6 +1206,7 @@ export default function App() {
         )}
 
         <DeckCoach active={coachOpen} onDone={() => setCoachOpen(false)} />
+        <RoomsCoach active={roomsCoachOpen} onDone={() => setRoomsCoachOpen(false)} />
 
         <Toasts toasts={toasts.toasts} onDismiss={toasts.dismiss} />
 

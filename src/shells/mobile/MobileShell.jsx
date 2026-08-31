@@ -66,6 +66,8 @@ export function MobileShell({
             key={item.key}
             type="button"
             className="dock__item"
+            /* Якорь для обучающих подсказок — см. `DeckCoach`. */
+            data-coach={item.coach}
             aria-current={active === item.key ? 'page' : undefined}
             onClick={() => onNavigate(item.key)}
           >
