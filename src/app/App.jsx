@@ -309,7 +309,6 @@ export default function App() {
     // Ключ вместо самого массива: `members` пересоздаётся на каждом
     // обновлении присутствия, и по нему эффект крутился бы вхолостую.
   }, [partnersKey, roomUser?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
-  const deckPoolRef = useRef([]);
   const deckRef = useRef(null);
   const publishedFor = useRef(null);
 
@@ -634,19 +633,6 @@ export default function App() {
      */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckMode, room.code, deck.queue.length, room.progress.slowest, room.progress.size]);
-
-  /*
-   * Снимок колоды для тех мест, куда её не передать пропсом.
-   *
-   * Разнесено на два эффекта не для красоты: `deck` — новый объект
-   * на каждый рендер, и в общем эффекте перебор всей очереди по шесть
-   * десятков карточек шёл на любую перерисовку экрана, включая тост
-   * и тик прогресса комнаты. Перебор нужен, только когда очередь
-   * действительно поменялась.
-   */
-  useEffect(() => {
-    if (deck.queue.length) deckPoolRef.current = deck.queue.map((e) => e.title);
-  }, [deck.queue]);
 
   useEffect(() => { deckRef.current = deck; });
 
@@ -1293,7 +1279,7 @@ export default function App() {
         <RouletteModal
           open={rouletteOpen}
           onClose={() => setRouletteOpen(false)}
-          pool={deckPoolRef.current}
+          getPool={deck.catalog}
           history={history}
           taste={taste}
           onPick={(title) => setDetailsEntry({ id: title.id, title, matchedTags: [] })}

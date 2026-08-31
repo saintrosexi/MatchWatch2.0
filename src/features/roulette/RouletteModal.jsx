@@ -6,7 +6,8 @@ import { haptic } from '../../lib/telegram.js';
 import { sfx, unlockAudio } from '../../lib/sound.js';
 import { trackMetric } from '../../lib/telemetry.js';
 import { METRIC } from '../../../shared/telemetry/events.js';
-import { pickReel, rouletteCandidates } from '../../engine/roulette.js';
+import { pickReel, rouletteCandidates, RECENT_MEMORY } from '../../engine/roulette.js';
+import { loadLocal, saveLocal, STORAGE_KEYS } from '../../lib/storage.js';
 
 /** Сколько полных оборотов проходит лента до остановки. */
 const LOOPS = 3;
@@ -20,20 +21,44 @@ const SPIN_MS = 2800;
  * намеренно: рулетка здесь не про случайность выбора, а про то, чтобы
  * снять с человека необходимость решать. Случаен состав, а не победитель.
  */
-export function RouletteModal({ open, onClose, pool = [], onPick, history = {}, taste = null }) {
+export function RouletteModal({ open, onClose, getPool, onPick, history = {}, taste = null }) {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
+  /* Счётчик прокруток: им пересобирается барабан, не трогая остальное. */
+  const [round, setRound] = useState(0);
+  /* Барабан пересобран и ждёт отрисовки — крутить можно только после неё. */
+  const [pendingSpin, setPendingSpin] = useState(false);
   const timers = useRef([]);
   const stripRef = useRef(null);
   const animation = useRef(null);
 
-  const candidates = useMemo(() => rouletteCandidates(pool, history), [pool, history]);
+  /*
+   * Каталог читаем в момент открытия, а не на каждом рендере: он живёт
+   * в ref колоды и растёт по мере подгрузки.
+   */
+  const candidates = useMemo(
+    () => (open ? rouletteCandidates(getPool?.() ?? [], history) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [open, history],
+  );
+
+  /* Что уже выпадало: рулетка не должна повторяться два раза подряд. */
+  const recent = useMemo(
+    () => (open ? loadLocal(STORAGE_KEYS.ROULETTE_RECENT, []) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [open, round],
+  );
 
   /*
-   * Барабан набирается из фильмов с самой любимой темой пользователя,
-   * а внутри десятки случайность честная — включая того, кто выпадет.
+   * Барабан набирается из близкого вкусу, а внутри десятки случайность
+   * честная — включая того, кто выпадет. `round` в зависимостях: без него
+   * «Ещё раз» крутило бы ровно тот же барабан.
    */
-  const reel = useMemo(() => pickReel(candidates, { taste }), [candidates, taste, open]);
+  const reel = useMemo(
+    () => pickReel(candidates, { taste, recent }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [candidates, taste, round],
+  );
 
   const winner = reel[reel.length - 1] ?? null;
 
@@ -43,7 +68,10 @@ export function RouletteModal({ open, onClose, pool = [], onPick, history = {}, 
   useEffect(() => () => { clearTimers(); stopAnimation(); }, []);
 
   useEffect(() => {
-    if (!open) { clearTimers(); stopAnimation(); setSpinning(false); setResult(null); }
+    if (!open) {
+      clearTimers(); stopAnimation();
+      setSpinning(false); setResult(null); setPendingSpin(false);
+    }
   }, [open]);
 
   const spin = useCallback(() => {
@@ -80,8 +108,46 @@ export function RouletteModal({ open, onClose, pool = [], onPick, history = {}, 
       setResult(winner);
       haptic('success');
       sfx.favorite();
+
+      /*
+       * Запоминаем весь барабан, а не одного победителя.
+       *
+       * Человек видел все десять постеров, пока лента крутилась, —
+       * для него повторится и не выигравший. Помним ограниченный хвост:
+       * длинная память у человека с узким вкусом съела бы всю полосу.
+       */
+      const shown = [...reel.map((t) => t.id), ...recent].slice(0, RECENT_MEMORY);
+      saveLocal(STORAGE_KEYS.ROULETTE_RECENT, [...new Set(shown)]);
     }, SPIN_MS));
-  }, [spinning, reel, winner, candidates.length]);
+  }, [spinning, reel, winner, recent, candidates.length]);
+
+  /*
+   * Прокрутка в два шага: сперва новый барабан, потом вращение.
+   *
+   * Одним действием не выходит. Барабан живёт в разметке, и анимация
+   * меряет высоту уже отрисованных ячеек — крутить состав, которого
+   * на экране ещё нет, нечем. Поэтому нажатие только заказывает новый
+   * барабан, а вращение запускает эффект, когда тот отрисовался.
+   *
+   * Подмена состава не видна: к этому моменту лента уже отброшена
+   * в начало, а результат прошлой прокрутки убран.
+   */
+  const requestSpin = useCallback(() => {
+    if (spinning) return;
+    clearTimers();
+    stopAnimation();
+    setResult(null);
+    setRound((n) => n + 1);
+    setPendingSpin(true);
+  }, [spinning]);
+
+  useEffect(() => {
+    if (!pendingSpin) return;
+    setPendingSpin(false);
+    spin();
+    // `reel` в зависимостях — это и есть ожидание нового барабана.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSpin, reel]);
 
   /*
    * Закрытие обязано быть безотказным. Здесь уже жила опечатка от прошлой
@@ -95,6 +161,7 @@ export function RouletteModal({ open, onClose, pool = [], onPick, history = {}, 
       stopAnimation();
       setSpinning(false);
       setResult(null);
+      setPendingSpin(false);
     } finally {
       onClose?.();
     }
@@ -145,7 +212,7 @@ export function RouletteModal({ open, onClose, pool = [], onPick, history = {}, 
           <button
             type="button"
             className="btn btn--gold btn--lg"
-            onClick={spin}
+            onClick={requestSpin}
             disabled={spinning || reel.length < 2}
           >
             <Dices size={20} /> {result ? 'Ещё раз' : 'Крутить'}

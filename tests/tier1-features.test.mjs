@@ -579,6 +579,50 @@ test('F28 · рулетка тянет из любимой темы, а внут
   assert.equal(pickReel([films[0]], { size: 10 }).length, 1);
 });
 
+test('F51 · рулетка не повторяет недавно выпавшее', async () => {
+  const { pickReel, RECENT_MEMORY } = await import('../src/engine/roulette.js');
+
+  const films = Array.from({ length: 120 }, (_, i) => ({
+    id: `tmdb:movie:${i}`,
+    title: `Фильм ${i}`,
+    quality: (i % 10) / 10,
+    tags: { самураи: 1 },
+  }));
+
+  let taste = createEmptyProfile();
+  for (let i = 0; i < 5; i += 1) {
+    taste = applySignal(taste, { tags: { самураи: 1 }, moods: NEUTRAL_MOOD }, ACTION.FAVORITE);
+  }
+
+  const first = pickReel(films, { size: 10, taste, random: seededRandom(3) });
+  const recent = first.map((t) => t.id);
+
+  /*
+   * Тот же жребий с той же случайностью: без памяти вернулся бы ровно
+   * тот же барабан — это и была жалоба «каждый раз одно и то же».
+   */
+  const second = pickReel(films, { size: 10, taste, recent, random: seededRandom(3) });
+
+  assert.equal(second.length, 10);
+  assert.equal(
+    second.filter((t) => recent.includes(t.id)).length, 0,
+    'в новом барабане не должно быть ничего из прошлого',
+  );
+
+  /*
+   * Узкий каталог: помнить нечего — фильмов меньше, чем помещается
+   * в память. Повториться тут лучше, чем показать пустоту или увести
+   * человека от его вкуса.
+   */
+  const narrow = films.slice(0, 12);
+  const tight = pickReel(narrow, {
+    size: 10, taste, recent: narrow.map((t) => t.id), random: seededRandom(4),
+  });
+  assert.equal(tight.length, 10, 'на узком каталоге барабан всё равно полный');
+
+  assert.ok(RECENT_MEMORY >= 10, 'память короче одного барабана бесполезна');
+});
+
 test('F41 · бот разбирает приглашение в комнату только в верном формате', async () => {
   const { parseRoomPayload } = await import('../api/_lib/botWebhook.js');
 
