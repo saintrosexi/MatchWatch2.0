@@ -174,6 +174,13 @@ export const api = {
   sendLink: (kind, initData, extra = {}) =>
     request('/telegram/send-link', { method: 'POST', body: { kind, initData, ...extra }, retries: 1 }),
 
+  /**
+   * Готовит сообщение для родного окна «поделиться» поверх Mini App.
+   * Возвращает `id`, который дальше уходит в `Telegram.WebApp.shareMessage`.
+   */
+  prepareShare: (kind, initData, extra = {}) =>
+    request('/telegram/prepare-share', { method: 'POST', body: { kind, initData, ...extra }, retries: 1 }),
+
   linkTelegram: (initData, accessToken) =>
     request('/auth/link-telegram', { method: 'POST', body: { initData }, accessToken, retries: 0 }),
 

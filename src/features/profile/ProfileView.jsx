@@ -1,6 +1,7 @@
 import { Crown, Lock, Settings, Share2, Sparkles, Users } from '../../ui/icons.js';
 import { PublicProfileView } from './PublicProfileView.jsx';
-import { shareViaInlineQuery, profileLink } from '../../lib/telegram.js';
+import { getInitData, sharePreparedMessage, shareViaInlineQuery, profileLink } from '../../lib/telegram.js';
+import { api } from '../../lib/api.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
 /**
@@ -28,12 +29,29 @@ export function ProfileView({
   const canShowcase = showcaseAllowed({ premium: premium?.premium });
   const username = profile?.username;
 
-  const share = () => {
+  const share = async () => {
     if (!username) {
       toasts?.error?.('Сначала задайте ник — по нему вас и найдут');
       return;
     }
-    /* Инлайн-режим — родной выбор чата поверх приложения. */
+
+    /*
+     * Сперва подготовленное сообщение: окно выбора чата рисуется ПОВЕРХ
+     * приложения и не закрывает его. `switchInlineQuery` ниже тоже
+     * открывает родное окно, но уводит в выбранный чат.
+     */
+    const initData = getInitData();
+    if (initData) {
+      try {
+        const prepared = await api.prepareShare('profile', initData, { username });
+        if (prepared?.id && await sharePreparedMessage(prepared.id)) return;
+        /* Окно закрыли, не выбрав чат, — это решение человека. */
+        if (prepared?.id) return;
+      } catch {
+        /* Подготовить не вышло — идём дальше по запасным путям. */
+      }
+    }
+
     if (shareViaInlineQuery(`profile ${username}`, ['users', 'groups'])) return;
 
     /*

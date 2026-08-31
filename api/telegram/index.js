@@ -20,6 +20,7 @@ import { dispatchHandler } from '../_lib/botDispatch.js';
 import { setupHandler } from '../_lib/botSetup.js';
 import { notifyAllowHandler } from '../_lib/botNotifyAllow.js';
 import { sendLinkHandler } from '../_lib/botSendLink.js';
+import { prepareShareHandler } from '../_lib/botPrepareShare.js';
 import { sendJson } from '../_lib/http.js';
 
 const ROUTES = {
@@ -30,6 +31,8 @@ const ROUTES = {
   'notify-allow': notifyAllowHandler,
   /* Бот присылает ссылку сообщением — вместо закрытия Mini App. */
   'send-link': sendLinkHandler,
+  /* Готовит сообщение для родного окна выбора чата поверх Mini App. */
+  'prepare-share': prepareShareHandler,
 };
 
 export default async function handler(req, res) {

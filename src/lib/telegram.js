@@ -215,6 +215,49 @@ export function roomInviteLink(code) {
 
 
 /**
+ * Отправить подготовленное сообщение из родного окна выбора чата.
+ *
+ * Это единственный способ поделиться, при котором Mini App НЕ
+ * закрывается. `switchInlineQuery` окно тоже открывает, но по
+ * устройству уходит в выбранный чат — он вставляет туда запрос
+ * и обязан этот чат показать; приложение при этом закрывается,
+ * и это его работа, а не сбой.
+ *
+ * `shareMessage` появился в Bot API 8.0 и сделан ровно для этого:
+ * окно рисуется поверх, сообщение уходит, человек остаётся там же,
+ * где был. Сообщение готовится заранее на сервере — см.
+ * `/api/telegram/prepare-share`.
+ *
+ * @returns {Promise<boolean>} отправлено ли; `false` — метода нет
+ *   или человек закрыл окно, не выбрав чат.
+ */
+export function sharePreparedMessage(preparedId) {
+  const app = wa();
+
+  return new Promise((resolve) => {
+    if (!preparedId || !app?.shareMessage || !(app.isVersionAtLeast?.('8.0'))) {
+      resolve(false);
+      return;
+    }
+
+    try {
+      app.shareMessage(preparedId, (sent) => resolve(Boolean(sent)));
+    } catch (error) {
+      trackBusiness(BIZ.OFFLINE_DEGRADED, {
+        module: MODULE.SHARE,
+        level: LEVEL.INFO,
+        context: {
+          missingFeature: 'shareMessage',
+          reason: error?.message ?? 'unavailable',
+          tgVersion: app.version ?? null,
+        },
+      });
+      resolve(false);
+    }
+  });
+}
+
+/**
  * Инлайн-режим: родной выбор чата ПОВЕРХ Mini App.
  *
  * Это единственный способ позвать друга, не закрывая приложение.

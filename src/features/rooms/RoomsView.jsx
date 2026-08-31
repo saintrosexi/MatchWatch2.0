@@ -12,7 +12,8 @@ import { loadRecentRooms } from '../../engine/userData.js';
 import { normalizeRoomCode, ROOM_CODE_LENGTH } from '../../../shared/model/roomCode.js';
 import { JOIN_SOURCE } from '../../engine/rooms.js';
 import {
-  getInitData, haptic, requestWriteAccess, roomInviteLink, shareViaInlineQuery,
+  getInitData, haptic, requestWriteAccess, roomInviteLink, sharePreparedMessage,
+  shareViaInlineQuery,
 } from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
 import { trackMetric } from '../../lib/telemetry.js';
@@ -236,11 +237,23 @@ function RoomLobby({
    * Инлайн-режим включается у бота отдельно, поэтому запасные пути
    * остаются: обычный шаринг ссылки, системный «поделиться», копия.
    */
-  const share = () => {
+  const share = async () => {
     room.trackInvite();
     haptic('light');
 
-    /* Родной выбор чата поверх приложения — как задумано. */
+    /*
+     * Порядок попыток — от «окно поверх приложения» к «хоть как-нибудь».
+     *
+     * 1. `shareMessage` с подготовленным сообщением: окно рисуется
+     *    ПОВЕРХ, приложение не закрывается, чаты не отфильтрованы
+     *    инлайн-режимом. Ради этого всё и затевалось.
+     * 2. `switchInlineQuery`: окно тоже родное, но уводит в выбранный
+     *    чат и закрывает приложение — хуже, но лучше, чем ничего.
+     * 3. Бот присылает пересылаемую карточку.
+     * 4. Копия ссылки.
+     */
+    if (await sharePrepared()) return;
+
     if (shareViaInlineQuery(`room ${room.code}`, ['users', 'groups'])) return;
 
     /*
@@ -267,6 +280,33 @@ function RoomLobby({
      * с кодом и кнопкой входа, а не голый адрес.
      */
     sendInviteViaBot();
+  };
+
+  /** Подготовленное сообщение + родное окно поверх приложения. */
+  const sharePrepared = async () => {
+    const initData = getInitData();
+    if (!initData) return false;
+
+    try {
+      const prepared = await api.prepareShare('room_invite', initData, { code: room.code });
+      if (!prepared?.id) return false;
+
+      const sent = await sharePreparedMessage(prepared.id);
+      if (sent) {
+        trackMetric(METRIC.ROOM_INVITE_SENT, { room: room.code });
+        toasts.success('Приглашение отправлено');
+        return true;
+      }
+
+      /*
+       * Окно открылось, но человек закрыл его, не выбрав чат. Это его
+       * решение, а не сбой: продолжать перебор запасных путей и совать
+       * ему ссылку в буфер — значит спорить с ним.
+       */
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const sendInviteViaBot = async () => {
