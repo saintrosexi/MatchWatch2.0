@@ -9,7 +9,7 @@
 
 import { timingSafeEqual } from 'node:crypto';
 import { LEVEL } from '../../shared/telemetry/events.js';
-import { logError } from './telemetry.js';
+import { logError, flushTelemetry } from './telemetry.js';
 
 /*
  * Кому браузер разрешит читать наши ответы.
@@ -155,6 +155,19 @@ export function withHandler(options, handler) {
       const body = methods.includes('POST') && req.method === 'POST' ? await readBody(req) : {};
       const result = await handler({ req, res, query: url.searchParams, body });
       if (res.writableEnded) return;
+      /*
+       * Журнал дописывается ДО ответа, а не после.
+       *
+       * После ответа платформа замораживает контейнер и обрывает всё
+       * незавершённое: записи телеметрии молча терялись, а эндпоинт
+       * при этом честно отвечал `ok: true`. Худший вид поломки —
+       * тот, который рапортует об успехе.
+       *
+       * Ждать безопасно: ошибки записи проглочены внутри и запрос
+       * уронить не могут. Платим одним обращением к базе и только
+       * тогда, когда в этом запросе вообще что-то писалось.
+       */
+      await flushTelemetry();
       sendJson(res, 200, { ok: true, ...result, tookMs: Date.now() - started }, { cacheSeconds: options.cacheSeconds ?? 0 });
     } catch (error) {
       const isApi = error instanceof ApiError;
@@ -167,6 +180,9 @@ export function withHandler(options, handler) {
         error,
         context: { path: req.url, method: req.method, ...(isApi ? error.context : {}) },
       });
+
+      /* Ошибочный ответ — тем более: запись о сбое нужна нам больше всего. */
+      await flushTelemetry();
 
       if (res.writableEnded) return;
       sendJson(res, status, {
