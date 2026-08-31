@@ -56,6 +56,16 @@ const RELATED = {
  */
 const FALLBACK_LISTS = ['/trending/movie/week', '/movie/popular', '/movie/top_rated'];
 
+/**
+ * Сколько живёт урезанная подборка.
+ *
+ * Обычный список кэшируется на шесть часов. Урезанный столько держать
+ * нельзя: источник чинится за минуты, а мы раздавали бы грубую выборку
+ * ещё полдня — и полосу «у TMDB сбой» вместе с ней. Пять минут — это
+ * и защита от долбёжки в лежащую ручку, и быстрый возврат к норме.
+ */
+const DEGRADED_TTL = 5 * 60_000;
+
 const SORTS = {
   popularity: 'popularity.desc',
   rating: 'vote_average.desc',
@@ -183,7 +193,7 @@ export default withHandler({ methods: ['GET'], module: MODULE.TMDB_PROXY, cacheS
       totalPages: Math.min(payload?.total_pages ?? 1, 500),
       totalResults: payload?.total_results ?? titles.length,
     };
-  });
+  }, (result) => (result?.degraded ? DEGRADED_TTL : TTL.LIST));
 
   /*
    * Разметка подмешивается ПОСЛЕ кэша, а не внутри него.

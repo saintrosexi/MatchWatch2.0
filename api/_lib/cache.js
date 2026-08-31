@@ -45,7 +45,15 @@ function memorySet(key, value, ttl) {
  * @param {number} ttl   время жизни в миллисекундах
  * @param {() => Promise<any>} producer
  */
-export async function cached(key, ttl, producer) {
+/**
+ * @param {string} key
+ * @param {number} ttl срок годности
+ * @param {() => Promise<any>} producer
+ * @param {(value: any) => number} [ttlFor] срок по самому ответу —
+ *   нужен, когда ответ бывает неполноценным и держать его столько же,
+ *   сколько хороший, нельзя.
+ */
+export async function cached(key, ttl, producer, ttlFor = null) {
   const memHit = memoryGet(key);
   if (memHit) return { value: memHit, source: 'memory' };
 
@@ -69,9 +77,17 @@ export async function cached(key, ttl, producer) {
   }
 
   const value = await producer();
-  memorySet(key, value, ttl);
+  const liveTtl = ttlFor ? ttlFor(value) : ttl;
+  memorySet(key, value, liveTtl);
 
-  if (hasServiceKey()) {
+  /*
+   * В общий кэш кладём только полноценный ответ.
+   *
+   * Он живёт шесть часов и общий на всех: положив туда урезанную
+   * подборку, мы раздавали бы её ещё полдня после того, как источник
+   * починился. Короткий срок в памяти процесса такой цены не имеет.
+   */
+  if (hasServiceKey() && liveTtl >= ttl) {
     sbInsert('catalog_cache', {
       key, value, fetched_at: new Date().toISOString(),
     }, { upsert: true, onConflict: 'key' })
