@@ -173,7 +173,15 @@ export default withHandler({ methods: ['GET'], module: MODULE.TMDB_PROXY, cacheS
     const narrowed = degraded
       ? fetched.filter((r) => matchesFilters(r, { genres, yearFrom, yearTo, minRating }))
       : fetched;
-    const results = degraded && narrowed.length < 5 ? fetched : narrowed;
+    /*
+     * Порог, ниже которого фильтры отбрасываются целиком.
+     *
+     * Считается от порции, а не от абсолютного числа: из шестидесяти
+     * сырых записей десять выживших — это ещё подборка, а три —
+     * уже повод для «полистал и жди». Пустой экран поверх сломанного
+     * каталога хуже, чем подборка грубее заказанной.
+     */
+    const results = degraded && narrowed.length < 10 ? fetched : narrowed;
 
     const titles = results
       .filter(isReleased)
@@ -223,6 +231,34 @@ async function withMarkup(titles) {
 }
 
 /**
+ * До какого момента не трогаем `discover`.
+ *
+ * Отказы у TMDB идут пачками: замер 31.08.2026 дал восемь отказов
+ * подряд, потом четыре нормальных ответа. Ходить в лежащую ручку
+ * на КАЖДУЮ дозагрузку — значит платить несколько секунд ожидания
+ * снова и снова: человек листает четыре карточки и опять ждёт.
+ *
+ * Поэтому первый отказ закрывает ручку на минуту. Минута короче
+ * средней пачки отказов и достаточно коротка, чтобы вернуться
+ * к нормальной выдаче почти сразу после того, как TMDB починится.
+ */
+let discoverDownUntil = 0;
+const DISCOVER_COOLDOWN_MS = 60_000;
+
+/**
+ * Сколько страниц запасного списка склеиваем в одну свою.
+ *
+ * Списочная страница TMDB — это двадцать записей, из которых после
+ * отсева невышедшего, беспостерного и не подошедшего под фильтры
+ * остаётся четыре-пять. Колоде нужно двадцать пять, и она просит
+ * добавки снова и снова — а каждая просьба это отдельное ожидание.
+ *
+ * Три страницы разом дают шестьдесят сырых записей: после отсева
+ * набирается порция, с которой можно листать, а не ждать.
+ */
+const FALLBACK_PAGES = 3;
+
+/**
  * Забирает список, переживая падение `discover`.
  *
  * Попыток на `discover` намеренно МЕНЬШЕ обычного: при лежащей ручке
@@ -234,19 +270,58 @@ async function withMarkup(titles) {
 async function fetchList({ isDiscover, path, params, page, language }) {
   if (!isDiscover) return { payload: await tmdbFetch(path, params), degraded: false };
 
+  if (Date.now() < discoverDownUntil) return fetchFallback({ page, language });
+
   try {
-    return { payload: await tmdbFetch(path, params, { retries: 1 }), degraded: false };
+    const payload = await tmdbFetch(path, params, { retries: 1 });
+    discoverDownUntil = 0;
+    return { payload, degraded: false };
   } catch (error) {
-    for (const fallback of FALLBACK_LISTS) {
-      try {
-        const payload = await tmdbFetch(fallback, { page, language }, { retries: 1 });
-        if (payload?.results?.length) return { payload, degraded: true };
-      } catch {
-        /* Пробуем следующий: лёг весь TMDB — тогда честно упадём ниже. */
-      }
+    discoverDownUntil = Date.now() + DISCOVER_COOLDOWN_MS;
+    try {
+      return await fetchFallback({ page, language });
+    } catch {
+      /* Лёг весь TMDB — честнее отдать исходную ошибку. */
+      throw error;
     }
-    throw error;
   }
+}
+
+/**
+ * Запасная выдача: несколько страниц здорового списка разом.
+ *
+ * Страницы берутся подряд и параллельно — одна порция вместо трёх
+ * отдельных ожиданий. Наша страница `page` раскладывается в свой
+ * непрерывный отрезок чужих страниц, поэтому листание вперёд даёт
+ * новые фильмы, а не те же самые.
+ */
+async function fetchFallback({ page, language }) {
+  for (const fallback of FALLBACK_LISTS) {
+    const first = (page - 1) * FALLBACK_PAGES + 1;
+    const pages = Array.from({ length: FALLBACK_PAGES }, (_, i) => first + i)
+      .filter((n) => n <= 500);
+
+    const parts = await Promise.all(pages.map((n) => (
+      tmdbFetch(fallback, { page: n, language }, { retries: 1 }).catch(() => null)
+    )));
+
+    const results = parts.flatMap((part) => part?.results ?? []);
+    if (results.length) {
+      const head = parts.find(Boolean);
+      return {
+        payload: {
+          results,
+          page,
+          /* Страниц у нас втрое меньше: в каждой лежит три чужих. */
+          total_pages: Math.ceil((head?.total_pages ?? 1) / FALLBACK_PAGES),
+          total_results: head?.total_results ?? results.length,
+        },
+        degraded: true,
+      };
+    }
+  }
+
+  throw new Error('запасные списки TMDB тоже не ответили');
 }
 
 /**
