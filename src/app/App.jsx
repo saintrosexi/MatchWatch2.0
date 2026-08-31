@@ -1000,6 +1000,8 @@ export default function App() {
       compact={deckMode === DECK_MODE.ROOM}
       roomProgress={deckMode === DECK_MODE.ROOM ? room.progress : null}
       roomMembers={deckMode === DECK_MODE.ROOM ? room.members : null}
+      roomCode={deckMode === DECK_MODE.ROOM ? room.code : null}
+      meUid={user?.uid}
       nearMatches={deckMode === DECK_MODE.ROOM ? room.nearMatches : []}
       onRefreshNear={deckMode === DECK_MODE.ROOM ? room.refreshNearMatches : null}
       /*
@@ -1255,6 +1257,7 @@ export default function App() {
             roomCode={room.code}
             partners={room.members.filter((m) => m.uid !== user?.uid)}
             friendIds={friendIds}
+            meUid={user?.uid}
             onClose={room.dismissCelebration}
             onOpenWatchlist={() => { room.dismissCelebration(); setView(VIEW.MINE); }}
             /*

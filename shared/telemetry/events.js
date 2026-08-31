@@ -78,6 +78,7 @@ export const METRIC = Object.freeze({
   ROOM_CREATED: 'room_created',
   ROOM_JOINED: 'room_joined',
   ROOM_INVITE_SENT: 'room_invite_sent',
+  ROOM_MESSAGE_SENT: 'room_message_sent',
   MATCH: 'match',
   MATCH_SHARED: 'match_shared',
   WATCHLIST_ADD: 'watchlist_add',

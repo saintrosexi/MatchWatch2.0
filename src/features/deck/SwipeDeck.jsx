@@ -14,6 +14,7 @@ import { trackError } from '../../lib/telemetry.js';
 import { LEVEL, MODULE } from '../../../shared/telemetry/events.js';
 import { Compass, PartyPopper, SlidersHorizontal, Users } from '../../ui/icons.js';
 import { StarScale } from '../../ui/RatingPicker.jsx';
+import { RoomChat } from '../rooms/RoomChat.jsx';
 
 /**
  * Стопка карточек: жест, кнопки, клавиатура и предзагрузка постеров.
@@ -40,6 +41,9 @@ export function SwipeDeck({
   /** Прогресс участников комнаты: { size, mine, slowest, byUser }. */
   roomProgress = null,
   roomMembers = null,
+  /** Код комнаты и свой идентификатор — для разговора во время паузы. */
+  roomCode = null,
+  meUid = null,
   nearMatches = [],
   onAgreeNear = null,
   onRefreshNear = null,
@@ -256,6 +260,19 @@ export function SwipeDeck({
             * машину, и тут уместен честный срок: пауза в несколько секунд
             * без единого признака работы читается как зависание.
             */}
+          {/*
+            * Пауза — единственное место в ленте, где разговор никому
+            * не мешает: свайпать нечего, все ждут одного и того же.
+            */}
+          {roomCode && (
+            <RoomChat
+              code={roomCode}
+              uid={meUid}
+              members={roomMembers ?? []}
+              placement="waiting"
+            />
+          )}
+
           {everyoneDone ? <NextRound /> : (
             <EmptyState
               icon={Users}

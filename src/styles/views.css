@@ -1362,3 +1362,116 @@ body:has(.profile-wash) .aurora { opacity: .18; }
 .plan__list li { display: flex; align-items: flex-start; gap: 8px; }
 .plan--premium .plan__list li { color: var(--text-hi); }
 .plan--premium .plan__list svg { color: var(--mint); flex: 0 0 auto; margin-top: 3px; }
+
+/* ── Разговор в комнате ──────────────────────────────────────────── */
+
+/*
+ * Свёрнутый вид — одна строка и ничего больше.
+ *
+ * Двое пришли выбирать кино, а не переписываться. Блок, который занимает
+ * место и просит внимания, мешает ровно тому, ради чего комнату создали,
+ * поэтому по умолчанию это полоса высотой в строку с последним
+ * сообщением: не заметить нельзя, отвлечься не на что.
+ */
+.room-chat__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, .04);
+  color: var(--text-mid);
+  font-size: var(--t-small);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.room-chat__bar:hover { background: rgba(255, 255, 255, .07); }
+.room-chat__bar-icon { flex: 0 0 auto; font-size: 15px; }
+.room-chat__bar-text { min-width: 0; }
+
+.room-chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  background: var(--glass-bg);
+}
+.room-chat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.room-chat__title {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-low);
+}
+.room-chat__head button { color: var(--text-low); }
+.room-chat__head button:hover { color: var(--text-hi); }
+
+/*
+ * Список ограничен по высоте намеренно: разговор о вечере не должен
+ * выталкивать вниз то, ради чего экран открыт.
+ */
+.room-chat__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 132px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.room-chat__line {
+  font-size: var(--t-small);
+  line-height: 1.4;
+  color: var(--text-mid);
+}
+.room-chat__line b { color: var(--text-hi); font-weight: 600; }
+.room-chat__line[data-mine='true'] b { color: var(--coral); }
+
+.room-chat__reactions { display: flex; flex-wrap: wrap; gap: 6px; }
+.room-chat__reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, .05);
+  color: var(--text-mid);
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+.room-chat__reaction:hover { color: var(--text-hi); background: rgba(255, 255, 255, .09); }
+.room-chat__reaction:disabled { opacity: .5; }
+
+.room-chat__form { display: flex; gap: 6px; }
+.room-chat__input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px var(--s-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, .04);
+  color: var(--text-hi);
+  font-size: var(--t-small);
+}
+.room-chat__input::placeholder { color: var(--text-faint); }
+.room-chat__send {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  border-radius: 50%;
+  background: var(--coral-soft);
+  color: var(--coral);
+  cursor: pointer;
+}
+.room-chat__send:disabled { opacity: .4; cursor: default; }

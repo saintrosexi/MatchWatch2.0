@@ -6,6 +6,7 @@ import {
 import { listNames } from '../../../shared/i18n/plural.js';
 import { EmptyState, StatusStrip } from '../../ui/States.jsx';
 import { Sheet } from '../../ui/Sheet.jsx';
+import { RoomChat } from './RoomChat.jsx';
 import { loadRecentRooms } from '../../engine/userData.js';
 import { normalizeRoomCode, ROOM_CODE_LENGTH } from '../../../shared/model/roomCode.js';
 import { JOIN_SOURCE } from '../../engine/rooms.js';
@@ -446,6 +447,15 @@ function RoomLobby({
         onChange={room.setMood}
         disabled={hasDeck}
       />
+
+      {/*
+        * Разговор перед стартом — свёрнутой полосой.
+        *
+        * Момент выбран не случайно: пока колода не собрана, людям как раз
+        * есть что сказать друг другу («го», «я на пять минут»), а мешать
+        * этим нечему — свайпать ещё нечего.
+        */}
+      <RoomChat code={room.code} uid={user?.uid} members={room.members} placement="lobby" />
 
       {/*
         * Колода собирается осознанно, а не в момент создания комнаты:

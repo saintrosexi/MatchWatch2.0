@@ -263,6 +263,79 @@ function shapeState(code, room, members, swipes, matches, watchlist) {
  * канал сам уберёт участника при обрыве связи, чего колонка не умеет —
  * упавший клиент навсегда остался бы «в сети».
  */
+/** Набор быстрых реакций. Больше — уже меню, а не реакция. */
+export const ROOM_REACTIONS = Object.freeze([
+  { key: 'go', emoji: '🔥', label: 'го' },
+  { key: 'next', emoji: '⏭', label: 'дальше' },
+  { key: 'yes', emoji: '👍', label: 'согласен' },
+  { key: 'no', emoji: '🙅', label: 'не хочу' },
+  { key: 'tired', emoji: '😴', label: 'устал' },
+  { key: 'wait', emoji: '✋', label: 'подожди' },
+]);
+
+/** Последние сообщения комнаты. Больше двадцати в разговоре о вечере не нужно. */
+export async function loadRoomMessages(code, { limit = 20 } = {}) {
+  const normalized = normalizeRoomCode(code);
+  if (!supabaseReady() || !normalized) return [];
+
+  const { data, error } = await supabase
+    .from('room_messages')
+    .select('id,user_id,kind,body,created_at')
+    .eq('room_code', normalized)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  /* Возвращаем в порядке чтения: снизу свежее, как в любом разговоре. */
+  return (data ?? []).reverse();
+}
+
+/**
+ * Отправляет реакцию или короткую фразу.
+ *
+ * Длину режем и здесь, и в базе. Здесь — чтобы человек не потерял текст
+ * на отказе сервера; там — потому что клиент обходится.
+ */
+export async function sendRoomMessage(code, { kind = 'reaction', body, uid }) {
+  const normalized = normalizeRoomCode(code);
+  const text = String(body ?? '').trim().slice(0, 200);
+  if (!supabaseReady() || !normalized || !text || !uid) return null;
+
+  const { data, error } = await supabase
+    .from('room_messages')
+    .insert({ room_code: normalized, user_id: uid, kind, body: text })
+    .select('id,user_id,kind,body,created_at')
+    .single();
+
+  if (error) throw error;
+  trackMetric(METRIC.ROOM_MESSAGE_SENT, { room: normalized, context: { kind } });
+  return data;
+}
+
+/**
+ * Живая подписка на переписку комнаты.
+ *
+ * Отдельным каналом от `subscribeRoom`: тот перечитывает всё состояние
+ * комнаты на каждое изменение, и гонять полный пересчёт из-за смайлика
+ * значило бы делать переписку самой дорогой частью экрана.
+ */
+export function subscribeRoomMessages(code, onMessage) {
+  const normalized = normalizeRoomCode(code);
+  if (!supabaseReady() || !normalized) return () => {};
+
+  const channel = supabase
+    .channel(`room-chat:${normalized}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'room_messages',
+      filter: `room_code=eq.${normalized}`,
+    }, (payload) => onMessage?.(payload.new))
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}
+
 export function subscribeRoom(code, { uid, onState, onError, onPresence }) {
   requireClient();
   const normalized = normalizeRoomCode(code);

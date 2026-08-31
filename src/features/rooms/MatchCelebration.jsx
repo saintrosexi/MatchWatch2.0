@@ -6,6 +6,7 @@ import { Poster, posterVariant } from '../../ui/Poster.jsx';
 import { downloadMatchImage, haptic, roomInviteLink, shareToTelegram, shareViaInlineQuery } from '../../lib/telegram.js';
 import { trackMetric, trackError } from '../../lib/telemetry.js';
 import { requestFriend } from '../../engine/social.js';
+import { RoomChat } from './RoomChat.jsx';
 import { METRIC, MODULE } from '../../../shared/telemetry/events.js';
 
 /**
@@ -16,6 +17,8 @@ export function MatchCelebration({
   match, roomCode, partners = [], onClose, onOpenWatchlist, onFinish,
   /** Кто уже в друзьях — чтобы не предлагать то, что есть. */
   friendIds,
+  /** Свой идентификатор — для разговора после мэтча. */
+  meUid,
 }) {
   const canvasRef = useRef(null);
   const [shareUrl, setShareUrl] = useState(null);
@@ -118,6 +121,21 @@ export function MatchCelebration({
               : <><UserPlus size={16} /> Добавить {partner.name} в друзья</>}
           </button>
         ))}
+
+        {/*
+          * Разговор после мэтча — третий и последний момент, где он
+          * уместен: фильм выбран, и единственное, что осталось сказать,
+          * это «смотрим сегодня?». Свёрнутой полосой, чтобы не спорить
+          * с самим празднованием.
+          */}
+        {roomCode && meUid && (
+          <RoomChat
+            code={roomCode}
+            uid={meUid}
+            members={partners}
+            placement="match"
+          />
+        )}
 
         <canvas ref={canvasRef} width={1080} height={1350} style={{ display: 'none' }} />
 
