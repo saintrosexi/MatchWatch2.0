@@ -60,6 +60,7 @@ export {
   PaperPlaneTilt as Send,
   ShareNetwork as Share2,
   SlidersHorizontal,
+  ShoppingCart,
   Sparkle as Sparkles,
   Wrench,
   Star,

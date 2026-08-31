@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { Check, Crown, Sparkles, Star } from '../../ui/icons.js';
+import { Check, Crown, ShoppingCart, Sparkles, Star } from '../../ui/icons.js';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { trackMetric } from '../../lib/telemetry.js';
+import { openTelegramLink } from '../../lib/telegram.js';
 import { METRIC } from '../../../shared/telemetry/events.js';
 import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
 
@@ -20,7 +21,12 @@ import { PREMIUM_CONFIG } from '../../../shared/config/premium.js';
  * вернутся, когда цена перестанет быть нулевой.
  */
 export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft, busy, onActivate, onPurchase, toasts }) {
-  const { price, promo, benefits } = PREMIUM_CONFIG;
+  const { price, promo, benefits, starsShop } = PREMIUM_CONFIG;
+
+  const openStarsShop = () => {
+    trackMetric(METRIC.PREMIUM_VIEWED, { context: { action: 'stars_shop' } });
+    openTelegramLink(starsShop.url);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -129,6 +135,17 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           )}
         </div>
 
+        {/*
+          * «Где купить звёзды» — под кнопкой оплаты, а не рядом с ней.
+          *
+          * Это запасной выход для тех, у кого звёзд не хватило, и стоять
+          * он должен ровно там, где человек упрётся: после того, как
+          * решил платить. Выше он отвлекал бы от самой оплаты.
+          */}
+        <button type="button" className="premium-shop" onClick={openStarsShop}>
+          <ShoppingCart size={14} /> {starsShop.label}
+        </button>
+
         <p className="faint premium-fineprint">
           {/*
             * «Карта не нужна» стоит первым и написано прямо.
@@ -141,6 +158,7 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           <b>Карту привязывать не нужно.</b> Оплата проходит внутри Telegram
           звёздами, и подписка не продлевается сама: когда месяц кончится,
           мы просто спросим ещё раз. Оплата картой появится позже.
+          {' '}{starsShop.note}
         </p>
       </div>
     </Sheet>

@@ -301,6 +301,23 @@ export function openLink(url) {
   globalThis.open?.(url, '_blank', 'noopener');
 }
 
+/**
+ * Открывает ссылку ВНУТРИ Telegram — чат, бота, канал.
+ *
+ * Отличается от `openLink` тем, что не выкидывает человека в браузер:
+ * `t.me`-адрес, открытый через внешний браузер, сначала показывает
+ * страницу-заглушку «Open in Telegram» и только потом возвращает
+ * обратно. Для ссылки на бота это два лишних экрана на ровном месте.
+ */
+export function openTelegramLink(url) {
+  const app = wa();
+  try {
+    if (app?.openTelegramLink) { app.openTelegramLink(url); return true; }
+  } catch { /* старый клиент — уходим в обычное открытие */ }
+  openLink(url);
+  return false;
+}
+
 /** Подтверждение выхода — иначе пользователь случайно закроет комнату. */
 export function enableClosingConfirmation(enabled) {
   const app = wa();

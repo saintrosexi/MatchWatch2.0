@@ -1475,3 +1475,22 @@ body:has(.profile-wash) .aurora { opacity: .18; }
   cursor: pointer;
 }
 .room-chat__send:disabled { opacity: .4; cursor: default; }
+
+/*
+ * «Где купить звёзды» — запасной выход, а не второе предложение.
+ *
+ * Выглядит ссылкой, а не кнопкой: рядом с настоящей кнопкой оплаты
+ * вторая кнопка спорит с ней за нажатие, хотя ведёт вообще наружу.
+ */
+.premium-shop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  padding: 4px 8px;
+  color: var(--text-mid);
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+.premium-shop:hover { color: var(--gold); }
