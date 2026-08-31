@@ -11,6 +11,9 @@ import { ENV, isSupabaseConfigured } from './env.js';
 import { trackBusiness, trackError } from './telemetry.js';
 import { BIZ, LEVEL, MODULE } from '../../shared/telemetry/events.js';
 
+/** Потолок ожидания одного запроса к Supabase. */
+const REQUEST_TIMEOUT_MS = 20000;
+
 let client = null;
 let initError = null;
 
@@ -32,6 +35,30 @@ if (isSupabaseConfigured()) {
       },
       global: {
         headers: { 'x-matchwatch-client': 'web' },
+        /*
+         * Ни один запрос не имеет права висеть вечно.
+         *
+         * У fetch нет тайм-аута по умолчанию, и в мобильном WebView
+         * запрос, ушедший в потерянное соединение, не завершается ни
+         * успехом, ни ошибкой — просто молчит. Всё, что его ждёт,
+         * молчит вместе с ним: заставка, лента, комната.
+         *
+         * Двадцать секунд — с запасом на медленную сеть и всё равно
+         * конечны. Оборванный запрос станет обычной ошибкой, а её
+         * приложение уже умеет показывать и повторять.
+         *
+         * Realtime это не трогает: он живёт на WebSocket, не на fetch.
+         */
+        fetch: (input, init = {}) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+          /* Свой abort вызывающего должен работать наравне с нашим. */
+          init.signal?.addEventListener('abort', () => controller.abort(), { once: true });
+
+          return fetch(input, { ...init, signal: controller.signal })
+            .finally(() => clearTimeout(timer));
+        },
       },
     });
   } catch (error) {

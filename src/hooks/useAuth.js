@@ -32,6 +32,16 @@ const STATUS = Object.freeze({
   DEGRADED: 'degraded',
 });
 
+/**
+ * Сколько ждём восстановления сессии, прежде чем показать вход.
+ *
+ * Семь секунд — заметно дольше любого живого ответа и заметно короче
+ * терпения человека, смотрящего на заставку. Ошибиться здесь в большую
+ * сторону хуже: лишний невидимый вход стоит ничего, а зависший экран
+ * стоит пользователя.
+ */
+const BOOT_TIMEOUT_MS = 7000;
+
 const toSession = (user) => ({
   uid: user.id,
   displayName: user.user_metadata?.display_name
@@ -97,16 +107,61 @@ export function useAuth() {
       return undefined;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) {
-        const session = toSession(data.session.user);
-        setUser(session);
-        setTelemetryUser(session.uid, session);
-        setStatus(STATUS.READY);
-      } else {
+    /*
+     * Старт обязан закончиться. Всегда.
+     *
+     * `getSession()` восстанавливает сохранённую сессию и, если срок
+     * токена вышел, идёт его обновлять по сети. Тайм-аута у этого
+     * запроса нет: в мобильном WebView он может висеть сколько угодно,
+     * а вместе с ним висит и заставка «Открываем кинозал» — экран,
+     * с которого нет ни одного выхода, даже кнопки.
+     *
+     * Поэтому ждём ограниченное время и при любом исходе — ответ,
+     * ошибка, тишина — уходим на экран входа. Внутри Telegram он
+     * тут же войдёт сам и человек не заметит подмены; в вебе увидит
+     * форму, то есть хоть что-то, что можно нажать.
+     */
+    let settled = false;
+    const finish = (fn) => { if (!settled) { settled = true; fn(); } };
+
+    const fallback = setTimeout(() => {
+      finish(() => {
+        /*
+         * Сохранённую сессию стираем: если она подвешивает старт, то
+         * подвесит и следующий, и человек останется с намертво
+         * заклинившим приложением. Один невидимый повторный вход
+         * дешевле, чем кирпич.
+         */
+        try { window.localStorage?.removeItem('mw3.auth'); } catch { /* приватный режим */ }
         setStatus(STATUS.ANONYMOUS);
-      }
-    });
+        trackError('Старт сессии не уложился в отведённое время', {
+          module: MODULE.AUTH_SESSION, level: LEVEL.WARNING,
+          error: new Error('getSession timeout'),
+          context: { timeoutMs: BOOT_TIMEOUT_MS, telegram: isTelegram() },
+        });
+      });
+    }, BOOT_TIMEOUT_MS);
+
+    supabase.auth.getSession()
+      .then(({ data }) => finish(() => {
+        clearTimeout(fallback);
+        if (data.session?.user) {
+          const session = toSession(data.session.user);
+          setUser(session);
+          setTelemetryUser(session.uid, session);
+          setStatus(STATUS.READY);
+        } else {
+          setStatus(STATUS.ANONYMOUS);
+        }
+      }))
+      /* Отказ тоже завершает старт: без этого заставка вечная. */
+      .catch((e) => finish(() => {
+        clearTimeout(fallback);
+        setStatus(STATUS.ANONYMOUS);
+        trackError('Не удалось восстановить сессию', {
+          module: MODULE.AUTH_SESSION, level: LEVEL.WARNING, error: e,
+        });
+      }));
 
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
@@ -122,7 +177,10 @@ export function useAuth() {
       }
     });
 
-    return () => subscription.subscription.unsubscribe();
+    return () => {
+      clearTimeout(fallback);
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithTelegram = useCallback(async () => {
