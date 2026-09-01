@@ -1,14 +1,18 @@
 import {
   ArrowLeft, BarChart3, Check, Crown, Download, LogOut, Pencil, Sparkles,
   Vibrate, Volume2, VolumeX, Star, Lock, Send, Newspaper,
+  Megaphone, Chats, Lifebuoy, ExternalLink, ShoppingCart,
 } from '../../ui/icons.js';
 import { useEffect, useState } from 'react';
 import { StatusStrip } from '../../ui/States.jsx';
 import { isBotStarted } from '../../engine/social.js';
-import { getInitData, openTelegramLink, requestWriteAccess } from '../../lib/telegram.js';
+import {
+  getInitData, keepsAppOpenOnTelegramLink, openTelegramLink, requestWriteAccess,
+} from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
 import { ENV } from '../../lib/env.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
+import { officialAccounts } from '../../../shared/config/contacts.js';
 import { RELEASE } from '../../../shared/config/news.js';
 
 /**
@@ -51,16 +55,16 @@ export function SettingsView({
    * Включение уведомлений.
    *
    * Сначала родное окно Telegram «разрешить боту писать вам?»: одно
-   * касание, не выходя из приложения. Раньше здесь была ссылка на чат
-   * с ботом, и она не работала — `openTelegramLink` закрывает Mini App,
-   * а бот, чей Mini App только что был открыт, это тот же чат, откуда
-   * человек и пришёл. Его просто возвращало назад, и выглядело это как
-   * «выкинуло в Telegram и ничего не произошло». Start ссылка тоже
-   * не отправляет: его всё равно надо нажимать руками.
+   * касание, не выходя из приложения вовсе. Оно остаётся первым не
+   * потому, что ссылка плоха, а потому, что ссылка требует нажать
+   * в чате Start руками, — а окно даёт то же самое разрешение в одно
+   * касание и не уводит никуда.
    *
    * Ссылка осталась запасным путём — для старых клиентов, где родного
    * окна нет, и для отказа: там человеку и правда некуда идти, кроме
-   * чата с ботом.
+   * чата с ботом. И это больше не «выкинет неизвестно куда»: с Bot API
+   * 7.0 переход по `t.me` сворачивает приложение в плашку и открывает
+   * чат поверх — см. `keepsAppOpenOnTelegramLink`.
    */
   const enableNotifications = async () => {
     if (asking) return;
@@ -101,26 +105,57 @@ export function SettingsView({
       }
 
       /*
-       * Родного окна нет или человек отказался.
-       *
-       * Раньше здесь молча открывалась ссылка на чат с ботом — Mini App
-       * закрывался, и со стороны это выглядело как «нажал и просто
-       * выкинуло». Теперь сначала говорим, что произойдёт.
+       * Родного окна нет или человек отказался — остаётся чат с ботом,
+       * и туда мы его именно ОТВОДИМ, а не рассказываем, как дойти.
        */
-      toasts?.push?.('Открываем чат с ботом — нажмите там Start');
       openBotChat();
     } catch {
-      toasts?.error?.('Не получилось включить. Открываем чат с ботом — нажмите там Start.');
       openBotChat();
     } finally {
       setAsking(false);
     }
   };
 
+  /*
+   * Чат с ботом — переходом, а не сообщением о переходе.
+   *
+   * Предупреждение подбирается под клиент, потому что происходит разное.
+   * На 7.0+ приложение остаётся: оно сворачивается в плашку, и обещать
+   * человеку возврат можно честно. На клиентах старше Mini App правда
+   * закроется — и сказать об этом надо ДО нажатия, а не поставить перед
+   * фактом.
+   */
   const openBotChat = () => {
     const bot = ENV.telegramBot;
-    if (!bot) return;
+    if (!bot) {
+      toasts?.error?.('Бот не настроен — напишите нам через «Написать нам»');
+      return;
+    }
+
+    toasts?.push?.(keepsAppOpenOnTelegramLink()
+      ? 'Открыли чат с ботом — нажмите там Start и возвращайтесь, приложение на месте'
+      : 'Открываем чат с ботом — нажмите там Start и вернитесь в приложение');
+
     openTelegramLink(`https://t.me/${bot}?start=notify`);
+  };
+
+  /*
+   * Официальные аккаунты.
+   *
+   * Список собирается конфигом, а не разметкой: канала у нас ещё нет,
+   * и когда он появится, добавить его надо одной строкой в
+   * `shared/config/contacts.js`, а не правкой этого экрана.
+   */
+  const accounts = officialAccounts({
+    bot: ENV.telegramBot,
+    starsShop: PREMIUM_CONFIG.starsShop,
+  });
+
+  const openAccount = (account) => {
+    if (!keepsAppOpenOnTelegramLink()) {
+      toasts?.push?.(`Открываем «${account.title}» в Telegram — приложение закроется`);
+    }
+    openTelegramLink(account.url);
   };
 
   return (
@@ -320,6 +355,37 @@ export function SettingsView({
         </div>
       </section>
 
+      {/* ── Наши в Telegram ───────────────────────────────────── */}
+      {/*
+        * Официальные аккаунты — списком, по которому можно нажать.
+        *
+        * До этого попасть в чат с ботом можно было только окольно:
+        * приложение просило бота прислать сообщение и говорило «ссылка
+        * в чате». Это работало, но это не переход, а рассказ о переходе:
+        * человек нажал кнопку и остался там же, где был, с обещанием.
+        *
+        * Прямая ссылка была бы лучше всегда, и раньше её здесь не было
+        * по одной причине — считалось, что `openTelegramLink` закрывает
+        * Mini App. С Bot API 7.0 это не так: чат открывается ПОВЕРХ,
+        * приложение сворачивается в плашку и ждёт. Ровно так это
+        * работает во всех нормальных сервисах внутри Telegram, и ровно
+        * так теперь работает у нас.
+        *
+        * Стрелка из квадрата у каждой строки — не украшение: она
+        * отличает переход в Telegram от перехода внутри приложения,
+        * а в этом списке ошибиться неприятнее всего.
+        */}
+      {accounts.length > 0 && (
+        <section className="section">
+          <h2 className="section__title">Наши в Telegram</h2>
+          <div className="stack gap-2">
+            {accounts.map((account) => (
+              <AccountLink key={account.key} account={account} onOpen={openAccount} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="row row--wrap gap-3">
         {/*
           * Дашборд видит только владелец.
@@ -345,6 +411,40 @@ export function SettingsView({
         {access?.tier === 'plus' && ' · тариф Plus'}
       </p>
     </div>
+  );
+}
+
+/**
+ * Иконка по виду аккаунта. Рупор — канал, кружки — чат, круг — поддержка,
+ * тележка — обменник, самолётик — бот. Разные значки нужны не для красоты:
+ * в списке из пяти одинаковых строк человек читает подпись, только если
+ * картинка рядом с ней уже подсказала, о чём речь.
+ */
+const ACCOUNT_ICON = {
+  bot: Send,
+  channel: Megaphone,
+  chat: Chats,
+  support: Lifebuoy,
+  shop: ShoppingCart,
+};
+
+/** Строка официального аккаунта: ведёт наружу, в Telegram. */
+function AccountLink({ account, onOpen }) {
+  const Icon = ACCOUNT_ICON[account.kind] ?? Send;
+  return (
+    <button
+      type="button"
+      className="member"
+      style={{ cursor: 'pointer', width: '100%' }}
+      onClick={() => onOpen(account)}
+    >
+      <Icon size={20} color="var(--text-mid)" />
+      <span className="stack grow" style={{ textAlign: 'left' }}>
+        <span className="member__name">{account.title}</span>
+        <span className="member__state">{account.note}</span>
+      </span>
+      <ExternalLink size={16} color="var(--text-mid)" aria-hidden />
+    </button>
   );
 }
 

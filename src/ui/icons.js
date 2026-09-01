@@ -58,6 +58,17 @@ export {
   ArrowCounterClockwise as RotateCcw,
   Gear as Settings,
   Lock,
+  /*
+   * Официальные аккаунты в Telegram: рупор — канал, кружки — чат,
+   * спасательный круг — поддержка, стрелка из квадрата — «уйдёт
+   * за пределы приложения». Последняя нужна отдельной иконкой:
+   * ряд одинаковых стрелок-шевронов не отличает переход внутри
+   * приложения от перехода в Telegram, а разница ровно в этом.
+   */
+  Megaphone,
+  ChatsCircle as Chats,
+  Lifebuoy,
+  ArrowSquareOut as ExternalLink,
   MagnifyingGlass as Search,
   PaperPlaneTilt as Send,
   ShareNetwork as Share2,

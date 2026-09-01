@@ -872,3 +872,105 @@ test('I15 · семена берутся по одному на франшизу
   // Если разнообразия не хватило — добираем пропущенным, а не оставляем пусто.
   assert.equal(spreadSeeds(loved.slice(0, 3), 3).length, 3);
 });
+
+/* ── Переходы в Telegram: чат, канал, обменник, «поделиться» ───── */
+
+/**
+ * Здесь проверяется одно утверждение, на котором держатся все переходы
+ * наружу: с Bot API 7.0 `openTelegramLink` НЕ закрывает Mini App.
+ *
+ * Раньше код считал наоборот, и из-за этого «где купить звёзды» вело
+ * не в обменник, а в уведомление о том, что бот прислал ссылку, а
+ * «пригласить» — в буфер обмена. Если однажды кто-то снова решит, что
+ * ссылка закрывает приложение, падать должно здесь, а не в отзывах.
+ */
+const withTelegram = async (webApp, fn) => {
+  const original = globalThis.Telegram;
+  globalThis.Telegram = webApp ? { WebApp: webApp } : undefined;
+  try { return await fn(); } finally { globalThis.Telegram = original; }
+};
+
+const fakeWebApp = (version) => {
+  const opened = [];
+  return {
+    opened,
+    version,
+    platform: 'ios',
+    initData: 'user=%7B%22id%22%3A1%7D',
+    openTelegramLink(url) { opened.push(url); },
+    openLink(url) { opened.push(`external:${url}`); },
+  };
+};
+
+test('T1 · на клиенте 7.0+ ссылка в Telegram не закрывает Mini App', async () => {
+  const app = fakeWebApp('7.10');
+  await withTelegram(app, async () => {
+    const tg = await import('../src/lib/telegram.js');
+    assert.equal(tg.keepsAppOpenOnTelegramLink(), true);
+    assert.equal(tg.openTelegramLink('https://t.me/GeekStarsBot?start=x'), 'kept');
+    assert.deepEqual(app.opened, ['https://t.me/GeekStarsBot?start=x']);
+  });
+});
+
+test('T2 · на клиенте старше 7.0 переход честно называется закрывающим', async () => {
+  const app = fakeWebApp('6.9');
+  await withTelegram(app, async () => {
+    const tg = await import('../src/lib/telegram.js');
+    assert.equal(tg.keepsAppOpenOnTelegramLink(), false);
+    assert.equal(tg.openTelegramLink('https://t.me/somebot'), 'closed');
+  });
+});
+
+test('T3 · вне Telegram переход уходит наружу, а не притворяется удачным', async () => {
+  await withTelegram(null, async () => {
+    const tg = await import('../src/lib/telegram.js');
+    assert.equal(tg.keepsAppOpenOnTelegramLink(), false);
+    assert.equal(tg.shareViaTelegramPicker({ url: 'https://t.me/x' }), false);
+  });
+});
+
+test('T4 · «поделиться» открывает родное окно выбора чата с пробелами, а не с плюсами', async () => {
+  const app = fakeWebApp('7.10');
+  await withTelegram(app, async () => {
+    const tg = await import('../src/lib/telegram.js');
+    const result = tg.shareViaTelegramPicker({
+      url: 'https://t.me/bot/app?startapp=12345',
+      text: 'Заходите в комнату 12345',
+    });
+
+    assert.equal(result, 'kept');
+    const [url] = app.opened;
+    assert.ok(url.startsWith('https://t.me/share/url?'), url);
+    assert.ok(url.includes('url=https%3A%2F%2Ft.me%2Fbot%2Fapp%3Fstartapp%3D12345'), url);
+    /* Плюс вместо пробела приезжает получателю как плюс — этого быть не должно. */
+    assert.ok(!url.includes('+'), url);
+    assert.equal(
+      decodeURIComponent(new URL(url).searchParams.get('text')),
+      'Заходите в комнату 12345',
+    );
+  });
+});
+
+test('T5 · официальные аккаунты: пункт есть только у настроенного адреса', async () => {
+  const { officialAccounts, telegramUrl } = await import('../shared/config/contacts.js');
+
+  const empty = officialAccounts({});
+  assert.deepEqual(empty, [], 'без бота и без обменника список пуст, а не с пустыми строками');
+
+  const list = officialAccounts({
+    bot: '@MatchWatchBot',
+    starsShop: { url: 'https://t.me/GeekStarsBot?start=u', note: 'Партнёрская' },
+    config: {
+      channel: { username: 'https://t.me/matchwatch_news', title: 'Канал', note: 'Что нового' },
+      chat: null,
+      support: null,
+    },
+  });
+
+  assert.deepEqual(list.map((a) => a.key), ['bot', 'channel', 'stars_shop']);
+  /* Собачка и полный адрес в настройках — нормальная запись, а не поломка ссылки. */
+  assert.equal(list[0].url, 'https://t.me/MatchWatchBot?start=hub');
+  assert.equal(list[1].url, 'https://t.me/matchwatch_news');
+  assert.equal(telegramUrl('@x'), 'https://t.me/x');
+  assert.equal(telegramUrl('   '), null);
+});

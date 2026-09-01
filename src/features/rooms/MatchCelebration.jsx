@@ -3,7 +3,10 @@ import confetti from 'canvas-confetti';
 import { Check, Download, Share2, Sparkles, UserPlus } from '../../ui/icons.js';
 import { Sheet } from '../../ui/Sheet.jsx';
 import { Poster, posterVariant } from '../../ui/Poster.jsx';
-import { downloadMatchImage, haptic, roomInviteLink, shareViaInlineQuery } from '../../lib/telegram.js';
+import {
+  downloadMatchImage, haptic, keepsAppOpenOnTelegramLink, roomInviteLink,
+  shareViaInlineQuery, shareViaTelegramPicker,
+} from '../../lib/telegram.js';
 import { trackMetric, trackError } from '../../lib/telemetry.js';
 import { requestFriend } from '../../engine/social.js';
 import { RoomChat } from './RoomChat.jsx';
@@ -65,14 +68,22 @@ export function MatchCelebration({
     trackMetric(METRIC.MATCH_SHARED, { room: roomCode, context: { titleId: match.titleId } });
     // switchInlineQuery отправляет карточку с постером прямо в чат:
     // получателю не нужно открывать приложение, чтобы её увидеть.
+    // Она остаётся первой ступенью намеренно — картинка с постером
+    // говорит о мэтче больше, чем ссылка с подписью.
     if (shareViaInlineQuery(`match ${match.titleId}`, ['users', 'groups'])) return;
 
     /*
-     * Ссылка через `openTelegramLink` отсюда убрана намеренно: она
-     * закрывает Mini App. Мэтч — момент, ради которого сюда и пришли,
-     * и выбрасывать из него в Telegram за то, что человек захотел
-     * поделиться, нельзя.
+     * Инлайн-режим не сработал — родное окно «Переслать» поверх мэтча.
+     *
+     * Раньше отсюда сразу уходили в системное «поделиться» или в буфер,
+     * потому что любой переход в Telegram закрывал Mini App. С Bot API
+     * 7.0 не закрывает: окно выбора чата рисуется поверх, празднование
+     * остаётся на месте, и мэтч — момент, ради которого сюда пришли, —
+     * никуда не девается.
      */
+    if (keepsAppOpenOnTelegramLink()
+      && shareViaTelegramPicker({ url: inviteUrl, text }) === 'kept') return;
+
     navigator.share?.({ title: 'MatchWatch', text, url: inviteUrl })
       ?.catch(() => navigator.clipboard?.writeText(`${text} ${inviteUrl}`));
   };

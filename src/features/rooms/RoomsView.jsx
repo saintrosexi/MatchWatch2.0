@@ -12,8 +12,8 @@ import { loadRecentRooms } from '../../engine/userData.js';
 import { normalizeRoomCode, ROOM_CODE_LENGTH } from '../../../shared/model/roomCode.js';
 import { JOIN_SOURCE } from '../../engine/rooms.js';
 import {
-  getInitData, haptic, requestWriteAccess, roomInviteLink, sharePreparedMessage,
-  shareViaInlineQuery,
+  getInitData, haptic, keepsAppOpenOnTelegramLink, requestWriteAccess, roomInviteLink,
+  sharePreparedMessage, shareViaInlineQuery, shareViaTelegramPicker,
 } from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
 import { trackBusiness, trackMetric } from '../../lib/telemetry.js';
@@ -247,12 +247,35 @@ function RoomLobby({
      * 1. `shareMessage` с подготовленным сообщением: окно рисуется
      *    ПОВЕРХ, приложение не закрывается, чаты не отфильтрованы
      *    инлайн-режимом. Ради этого всё и затевалось.
-     * 2. `switchInlineQuery`: окно тоже родное, но уводит в выбранный
+     * 2. Родное окно «Переслать» (`t.me/share/url`) — на клиентах
+     *    Bot API 7.0+ оно тоже рисуется поверх и приложение не
+     *    закрывает. Уходит голая ссылка вместо карточки, зато это
+     *    настоящий выбор чата, а не сообщение о том, что где-то
+     *    лежит ссылка.
+     * 3. `switchInlineQuery`: окно тоже родное, но уводит в выбранный
      *    чат и закрывает приложение — хуже, но лучше, чем ничего.
-     * 3. Бот присылает пересылаемую карточку.
-     * 4. Копия ссылки.
+     * 4. Бот присылает пересылаемую карточку.
+     * 5. Копия ссылки.
      */
     if (await sharePrepared()) return;
+
+    /*
+     * Раньше этой ступени не было, и после неудачи с подготовленным
+     * сообщением приглашение сразу уходило путём, закрывающим Mini App.
+     * Отсюда и жалоба «нажал пригласить — выкинуло». На 7.0+ окно
+     * пересылки закрывать приложение перестало, и ставить его перед
+     * инлайн-запросом стало не только можно, но и нужно.
+     */
+    if (invite && keepsAppOpenOnTelegramLink()) {
+      const picked = shareViaTelegramPicker({
+        url: invite,
+        text: `Заходите в комнату ${room.code} — выберем кино вместе 🍿`,
+      });
+      if (picked === 'kept') {
+        trackMetric(METRIC.ROOM_INVITE_SENT, { room: room.code });
+        return;
+      }
+    }
 
     if (shareViaInlineQuery(`room ${room.code}`, ['users', 'groups'])) return;
 

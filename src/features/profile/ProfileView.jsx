@@ -1,6 +1,9 @@
 import { Crown, Lock, Settings, Share2, Sparkles, Users } from '../../ui/icons.js';
 import { PublicProfileView } from './PublicProfileView.jsx';
-import { getInitData, sharePreparedMessage, shareViaInlineQuery, profileLink } from '../../lib/telegram.js';
+import {
+  getInitData, keepsAppOpenOnTelegramLink, profileLink, sharePreparedMessage,
+  shareViaInlineQuery, shareViaTelegramPicker,
+} from '../../lib/telegram.js';
 import { api } from '../../lib/api.js';
 import { PREMIUM_CONFIG, showcaseAllowed } from '../../../shared/config/premium.js';
 
@@ -52,14 +55,29 @@ export function ProfileView({
       }
     }
 
+    const link = profileLink(username);
+
+    /*
+     * Родное окно «Переслать» — поверх приложения.
+     *
+     * Раньше следующей ступенью был инлайн-запрос, а за ним сразу буфер
+     * обмена: человек нажимал «Поделиться» и получал не окно выбора
+     * чата, а надпись «скопировано». С Bot API 7.0 `t.me/share/url`
+     * приложение не закрывает, поэтому настоящий выбор чата встаёт
+     * раньше обоих запасных путей.
+     */
+    if (link && keepsAppOpenOnTelegramLink()) {
+      if (shareViaTelegramPicker({ url: link, text: `Мой профиль в MatchWatch — @${username}` }) === 'kept') return;
+    }
+
     if (shareViaInlineQuery(`profile ${username}`, ['users', 'groups'])) return;
 
     /*
-     * Не вышло — копируем ссылку и остаёмся на месте. Открывать её
-     * через `openTelegramLink` нельзя: он закрывает Mini App, и человек,
-     * нажавший «Поделиться», теряет и профиль, и ссылку разом.
+     * Не вышло — копируем ссылку и остаёмся на месте. Сюда попадают
+     * только клиенты, где окно выбора чата недоступно или закрыло бы
+     * приложение: человек, нажавший «Поделиться», не должен терять
+     * и профиль, и ссылку разом.
      */
-    const link = profileLink(username);
     if (link) {
       navigator.clipboard?.writeText(link);
       toasts?.push?.('Telegram не дал выбрать чат — ссылка на профиль скопирована');
