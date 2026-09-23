@@ -2,6 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, RefreshCw } from '../../ui/icons.js';
 import { api } from '../../lib/api.js';
 import { ErrorState, LoadingState } from '../../ui/States.jsx';
+import { SOURCE } from '../../../shared/model/startParam.js';
+
+/** Источники без метки кампании — названы словами, а не кодом. */
+const SOURCE_LABEL = {
+  direct: 'Без метки',
+  [SOURCE.INVITE]: 'Приглашения в комнату',
+  [SOURCE.PROFILE]: 'Ссылки на профиль',
+  [SOURCE.BOT]: 'Кнопки бота',
+};
 
 /**
  * Минимальный дашборд продуктовых метрик.
@@ -125,6 +134,48 @@ export function DashboardView({ onBack }) {
                 );
               })}
             </div>
+          </section>
+
+          {/*
+            * Источники — сразу под воронкой: она говорит, где рвётся путь,
+            * а этот блок — откуда на него встают и чей трафик доходит
+            * до конца. Сравнивать каналы по числу пришедших без второй
+            * колонки нельзя: громкий пост может привести тех, кто уходит
+            * со второй карточки.
+            */}
+          <section className="section">
+            <h2 className="section__title">Откуда пришли</h2>
+            <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
+              Первое касание в окне: метка из ссылки <code>startapp=src_…</code> или
+              {' '}<code>utm_source</code>. «Без метки» — открывшие приложение напрямую.
+            </p>
+            {data.sources === null || data.sources === undefined ? (
+              <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
+                Отчёт не подключён: примените миграцию <code>ops_acquisition_sources</code>.
+              </p>
+            ) : data.sources.length === 0 ? (
+              <p className="faint" style={{ fontSize: 'var(--t-small)' }}>Заходов за период нет.</p>
+            ) : (
+              <div className="funnel-steps">
+                {data.sources.map((row) => {
+                  const top = data.sources[0]?.people || 1;
+                  return (
+                    <div className="funnel-step" key={row.source}>
+                      <div className="funnel-step__head">
+                        <span className="funnel-step__label">{SOURCE_LABEL[row.source] ?? row.source}</span>
+                        <span className="funnel-step__value">
+                          {row.people}
+                          <span className="faint"> · откалибровали {row.calibrated} · мэтч {row.matched}</span>
+                        </span>
+                      </div>
+                      <div className="funnel-step__track">
+                        <div className="funnel-step__fill" style={{ width: `${Math.round((row.people / top) * 100)}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section className="section">

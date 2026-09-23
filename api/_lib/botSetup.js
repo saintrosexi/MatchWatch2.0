@@ -103,14 +103,38 @@ export const setupHandler = withHandler({ methods: ['GET', 'POST'], module: MODU
     menu_button: { type: 'web_app', text: 'MatchWatch', web_app: { url: miniAppUrl() } },
   });
 
+  /*
+   * Витрина бота — первое, что человек видит, найдя его в поиске или
+   * открыв ссылку: описание стоит на пустом чате до нажатия «Старт»,
+   * короткая строка — в профиле и в карточке при пересылке. Пустое
+   * описание здесь — это потерянный человек, который не понял, куда
+   * попал. Тексты живут в коде, чтобы не расходиться с витриной сайта.
+   */
+  const description = await callBot('setMyDescription', { description: BOT_DESCRIPTION });
+  const shortDescription = await callBot('setMyShortDescription', {
+    short_description: BOT_SHORT_DESCRIPTION,
+  });
+
   return {
     bot,
     webhookUrl,
     webhook: webhook.ok,
     commands: commands.ok,
     menuButton: menu.ok || menu.description,
+    description: description.ok || description.description,
+    shortDescription: shortDescription.ok || shortDescription.description,
   };
 });
+
+/** До 512 символов — ограничение Telegram. */
+export const BOT_DESCRIPTION = '🍿 MatchWatch помогает выбрать кино за пять минут, а не за сорок.\n\n'
+  + '• Свайпайте фильмы: вправо — «хочу», влево — «мимо».\n'
+  + '• Позовите друга в комнату: как только вы оба захотите один фильм — это мэтч.\n'
+  + '• Рекомендации по темам, а не по жанрам, и объяснение под каждой карточкой.\n\n'
+  + 'Нажмите «Старт» — сюда будут приходить приглашения в комнаты и заявки в друзья.';
+
+/** До 120 символов: профиль бота и карточка при пересылке. */
+export const BOT_SHORT_DESCRIPTION = 'Свайпайте фильмы вдвоём — покажу, на чём вы совпали. Бесплатно, прямо в Telegram.';
 
 /** Что должно быть задано, чтобы бот заработал целиком. */
 function readiness() {

@@ -87,7 +87,7 @@ import {
   setHapticsEnabled, getStartRoomCode, getStartDestination, getStartParamRaw,
   enableClosingConfirmation, haptic,
 } from '../lib/telegram.js';
-import { DESTINATION, parseStartParam } from '../../shared/model/startParam.js';
+import { DESTINATION, acquisitionSource, parseStartParam } from '../../shared/model/startParam.js';
 import { setSoundEnabled } from '../lib/sound.js';
 import { trackError, trackMetric, breadcrumb } from '../lib/telemetry.js';
 import { LEVEL, METRIC, MODULE } from '../../shared/telemetry/events.js';
@@ -389,7 +389,16 @@ export default function App() {
     });
 
     const stopConfig = initRemoteConfig({ uid: user.uid });
-    trackMetric(METRIC.APP_OPEN, { context: { shell: platform.shell, telegram: platform.telegram } });
+    /*
+     * Источник — чтобы видеть, какой канал продвижения приводит людей.
+     * Пишется при каждом заходе, но непустым бывает только у того,
+     * что открыт по ссылке с меткой: повторный заход из списка чатов
+     * `start_param` уже не несёт.
+     */
+    const source = acquisitionSource(getStartParamRaw(), window.location.search);
+    trackMetric(METRIC.APP_OPEN, {
+      context: { shell: platform.shell, telegram: platform.telegram, ...(source ? { source } : {}) },
+    });
 
     return () => { alive = false; unsubscribe?.(); stopConfig?.(); };
   }, [user?.uid, platform.shell, platform.telegram]);

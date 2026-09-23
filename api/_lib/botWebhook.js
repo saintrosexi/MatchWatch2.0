@@ -19,7 +19,9 @@ import {
   sendMessage, openAppButton, answerInlineQuery, appLink, linkButton, miniAppUrl,
   callBot, navKeyboard, TEXTS,
 } from './botApi.js';
-import { DESTINATION, profileStartParam } from '../../shared/model/startParam.js';
+import {
+  DESTINATION, parseStartParam, profileStartParam, sourceStartParam,
+} from '../../shared/model/startParam.js';
 import { logError, logMetric } from './telemetry.js';
 import { creditPayment } from './billing.js';
 import { BIZ, LEVEL, METRIC, MODULE } from '../../shared/telemetry/events.js';
@@ -302,9 +304,17 @@ async function onStart({ telegramId, chatId, from, payload }) {
     notify: true,
   }], { upsert: true, onConflict: 'telegram_id' });
 
+  /*
+   * `/start src_habr` — человек пришёл по ссылке кампании на бота,
+   * а не на приложение. Метка пишется здесь и едет дальше в кнопку
+   * «Открыть»: иначе первый заход в приложение остался бы без подписи.
+   */
+  const started = parseStartParam(payload);
+  const source = started?.kind === 'source' ? started.source : null;
+
   logMetric(METRIC.BOT_STARTED, {
     userId,
-    context: { linked: Boolean(userId), invitedToRoom: Boolean(payload) },
+    context: { linked: Boolean(userId), invitedToRoom: Boolean(payload), ...(source ? { source } : {}) },
   });
 
   if (!miniAppUrl()) {
@@ -326,7 +336,11 @@ async function onStart({ telegramId, chatId, from, payload }) {
     return;
   }
 
-  await sendMessage(chatId, TEXTS.start, { keyboard: openAppButton() });
+  await sendMessage(chatId, TEXTS.start, {
+    keyboard: source
+      ? openAppButton(undefined, { startParam: sourceStartParam(source) })
+      : openAppButton(),
+  });
 }
 
 /** `/start room_23356` — приглашение в конкретную комнату. */

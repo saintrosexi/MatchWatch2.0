@@ -1,0 +1,497 @@
+/* ────────────────────────────────────────────────────────────────
+   Витрина /welcome — «Neon Noir» в жидком стекле
+   ────────────────────────────────────────────────────────────────
+   Токены общие с приложением: человек, открывший его после витрины,
+   должен узнать те же цвета и тот же свет на кромках. */
+
+@import '../styles/tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ink-void);
+  color: var(--text-hi);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+.faint { color: var(--text-low); }
+
+:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+/* ── Стена постеров ──────────────────────────────────────────── */
+/*
+ * Неподвижна намеренно. Бегущая лента была бы живее, но тогда каждое
+ * стекло поверх неё пересчитывало бы преломление шестьдесят раз
+ * в секунду. Стена стоит, стекло едет над ней при прокрутке — изгиб
+ * видно, а платить приходится только пока листают.
+ */
+.wall {
+  position: fixed;
+  inset: -12vh -12vw;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+.wall__row {
+  display: flex;
+  gap: 14px;
+}
+.wall__row:nth-child(even) { margin-left: -90px; }
+.wall__row img {
+  flex: 0 0 auto;
+  width: clamp(110px, 11vw, 171px);
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--ink-800);
+}
+/* Затемнение: постеры — фон, а не содержание; текст должен читаться. */
+.wall-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 20% 10%, rgba(255, 77, 94, 0.22), transparent 70%),
+    radial-gradient(50% 50% at 90% 90%, rgba(111, 216, 255, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.78) 60%, rgba(0, 0, 0, 0.92));
+}
+
+/* ── Жидкое стекло ───────────────────────────────────────────── */
+/*
+ * Базовый материал для всех браузеров: размытие, толща и кромка света.
+ * В Chromium на компьютере `refraction.js` дописывает к размытию
+ * изгиб по краю — `[data-refract]`.
+ */
+.lg {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02) 55%),
+    rgba(14, 14, 22, 0.46);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 30px 70px -30px rgba(0, 0, 0, 0.85);
+}
+.lg::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--lg-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* Преломление уже изгибает фон — заливку делаем прозрачнее, чтобы изгиб был виден. */
+.lg.is-refracting { background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015) 55%), rgba(12, 12, 20, 0.3); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .lg { background: var(--ink-800); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ── Кнопки ──────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: var(--r-pill);
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast) var(--ease-out);
+}
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: scale(0.97); }
+.btn--sm { min-height: 38px; padding: 0 16px; font-size: 14px; }
+.btn--lg { min-height: 56px; padding: 0 28px; font-size: 16px; }
+.btn--primary {
+  color: #fff;
+  background: var(--lg-caustic), var(--grad-flame);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    inset 0 -2px 8px rgba(110, 0, 20, 0.25),
+    var(--glow-coral);
+}
+.btn--glass {
+  color: var(--text-hi);
+  background: var(--lg-caustic), rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* ── Шапка ───────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: min(1120px, calc(100% - 32px));
+  margin: 14px auto 0;
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--r-pill);
+}
+.nav__brand { display: inline-flex; align-items: center; gap: 10px; }
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.04em;
+}
+.wordmark__a {
+  background: linear-gradient(180deg, #fff 0%, #c6c6d2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wordmark__b {
+  background: linear-gradient(180deg, #ff8c74 0%, #ef4e4e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nav__links { display: flex; gap: 4px; margin-left: auto; }
+.nav__links a {
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  color: var(--text-mid);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.nav__links a:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-hi); }
+
+main {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+/* ── Первый экран ────────────────────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: 48px;
+  min-height: calc(100vh - 90px);
+  padding: 48px 0 64px;
+}
+.hero__card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 44px;
+  border-radius: var(--r-xl);
+}
+.eyebrow {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 77, 94, 0.14);
+  border: 1px solid rgba(255, 77, 94, 0.32);
+  color: #ffb3bb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hero h1 { font-size: clamp(34px, 4.4vw, 58px); font-weight: 800; }
+.accent {
+  background: var(--grad-flame);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lede { font-size: clamp(16px, 1.6vw, 19px); color: var(--text-mid); max-width: 34em; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.fine { font-size: 14px; color: var(--text-low); }
+
+/* Макет телефона: карточка, капли-кнопки и мэтч. */
+.phone {
+  position: relative;
+  justify-self: center;
+  width: min(340px, 100%);
+  padding: 14px 14px 22px;
+  border-radius: 44px;
+  transform: rotate(3deg);
+}
+.phone__notch {
+  width: 90px;
+  height: 22px;
+  margin: 0 auto 12px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.7);
+}
+.swipe-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  aspect-ratio: 2 / 3;
+  background: var(--ink-800);
+  box-shadow: var(--shadow-card);
+  transform: rotate(-5deg) translateX(10px);
+}
+.swipe-card img { width: 100%; height: 100%; object-fit: cover; }
+.swipe-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 38%, rgba(0, 0, 0, 0.9) 72%, rgba(0, 0, 0, 0.97));
+}
+.stamp {
+  position: absolute;
+  top: 22px;
+  left: 18px;
+  z-index: 1;
+  padding: 4px 12px;
+  border: 3px solid var(--coral);
+  border-radius: 10px;
+  color: var(--coral);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  text-transform: uppercase;
+  transform: rotate(-14deg);
+  background: rgba(0, 0, 0, 0.25);
+}
+.swipe-card__info {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.swipe-card__info strong { font-family: var(--font-display); font-size: 22px; }
+.swipe-card__meta { font-size: 12px; color: var(--text-mid); }
+.swipe-card__why { font-size: 12px; color: var(--text-mid); }
+.swipe-card__why b { color: var(--coral); font-weight: 600; }
+
+.drops {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+}
+/* Капля: блик-полумесяц сверху и свет, вышедший снизу, — как в приложении. */
+.drop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-mid);
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(255, 255, 255, 0.24), transparent 72%),
+    radial-gradient(60% 28% at 50% 100%, rgba(255, 255, 255, 0.08), transparent 70%),
+    rgba(20, 20, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.drop--sm { width: 48px; height: 48px; }
+.drop--lg { width: 66px; height: 66px; }
+.drop--coral {
+  color: var(--coral);
+  border-color: rgba(255, 77, 94, 0.5);
+  background:
+    radial-gradient(70% 42% at 50% 6%, rgba(255, 255, 255, 0.24), transparent 72%),
+    radial-gradient(circle at 50% 45%, rgba(255, 77, 94, 0.35), transparent 72%),
+    rgba(20, 20, 30, 0.7);
+}
+.drop--gold { color: var(--gold); border-color: rgba(255, 194, 75, 0.45); }
+
+.match-chip {
+  position: absolute;
+  right: -44px;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 240px;
+  padding: 8px 16px 8px 8px;
+  border-radius: var(--r-lg);
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--text-mid);
+  transform: rotate(-3deg);
+  animation: chip-float 6s var(--ease-in-out) infinite alternate;
+}
+.match-chip b { display: block; color: var(--gold); font-family: var(--font-display); font-size: 16px; }
+.match-chip img { width: 54px; height: auto; flex: 0 0 auto; }
+@keyframes chip-float {
+  from { translate: 0 0; }
+  to { translate: 0 -10px; }
+}
+@media (prefers-reduced-motion: reduce) { .match-chip { animation: none; } }
+
+/* ── Разделы ─────────────────────────────────────────────────── */
+.section { padding: 56px 0; }
+.section__title {
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 800;
+  margin-bottom: 28px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px;
+  border-radius: var(--r-lg);
+}
+.step__num {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #fff;
+  background: var(--lg-caustic), var(--grad-flame);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 10px 26px -10px rgba(255, 77, 94, 0.8);
+}
+.step h3, .tile h3 { font-size: 19px; font-weight: 700; }
+.step p, .tile p { color: var(--text-mid); font-size: 15px; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--r-md);
+}
+
+.mascot {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+}
+.mascot__img { width: 260px; height: auto; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6)); }
+.mascot__bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px 32px;
+  border-radius: var(--r-xl);
+  font-size: clamp(17px, 1.8vw, 22px);
+  font-weight: 500;
+}
+.mascot__bubble .faint { font-size: 14px; }
+
+.faq { display: grid; gap: 12px; max-width: 760px; }
+.faq details { border-radius: var(--r-md); padding: 0 22px; }
+.faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 18px 0;
+  font-weight: 600;
+  font-size: 17px;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; float: right; color: var(--coral); font-weight: 700; }
+.faq details[open] summary::after { content: '–'; }
+.faq details p { padding: 0 0 18px; color: var(--text-mid); }
+
+.final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin: 40px 0 72px;
+  padding: 56px 32px;
+  border-radius: var(--r-xl);
+  text-align: center;
+}
+.final h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 800; }
+.final .cta { justify-content: center; }
+
+.footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px 48px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-low);
+  background: rgba(0, 0, 0, 0.8);
+}
+.footer a { color: var(--text-mid); }
+
+/* ── Узкие экраны ────────────────────────────────────────────── */
+@media (max-width: 920px) {
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 32px; }
+  .phone { transform: none; }
+  .match-chip { right: -8px; }
+  .steps, .tiles { grid-template-columns: minmax(0, 1fr); }
+  .mascot { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+  .mascot__img { width: 200px; }
+}
+@media (max-width: 640px) {
+  .nav__links { display: none; }
+  .nav { gap: 12px; }
+  .nav .btn { margin-left: auto; }
+  .hero__card { padding: 28px 22px; gap: 18px; }
+  .cta .btn { flex: 1 1 100%; }
+  .step, .tile { padding: 22px; }
+  .final { padding: 40px 20px; }
+  .match-chip { max-width: 210px; }
+}

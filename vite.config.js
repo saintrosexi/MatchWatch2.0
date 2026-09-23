@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { devServerApi } from './devServerApi.js';
@@ -13,6 +14,15 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     rollupOptions: {
+      /*
+       * Две страницы: приложение и витрина `/welcome` для трафика не из
+       * Telegram. Витрина не тянет ни React, ни Supabase — у человека
+       * из поста десять секунд, и ждать бандл приложения ему незачем.
+       */
+      input: {
+        index: fileURLToPath(new URL('./index.html', import.meta.url)),
+        welcome: fileURLToPath(new URL('./welcome.html', import.meta.url)),
+      },
       output: {
         /**
          * Библиотеки меняются реже кода приложения — своими чанками,

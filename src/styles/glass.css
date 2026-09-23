@@ -1,0 +1,290 @@
+/* ────────────────────────────────────────────────────────────────
+   Жидкое стекло — материал поверх «Neon Noir»
+   ────────────────────────────────────────────────────────────────
+
+   Три свойства, по которым стекло узнаётся:
+
+     1. Кромка света. Яркая там, куда падает свет, с обратным отблеском
+        на противоположной стороне. Рисуется маской по рамке — один раз,
+        без размытия.
+     2. Толща. Светлое пятно под верхним краем, как свет, собранный
+        в линзе. Обычный градиент в фоне.
+     3. Текучесть. Выбранный пункт не перескакивает, а перетекает —
+        и тянется в пути, как капля. Анимация трансформации, которую
+        браузер отдаёт композитору.
+
+   Чего здесь нарочно НЕТ — нового размытия фона. Док, кнопки колоды
+   и пилюли шапки уже однажды лишились backdrop-filter, потому что под
+   ними на каждом свайпе едет карточка и телефон грелся. Всё ниже стоит
+   столько же, сколько обычная заливка. Настоящее преломление — на
+   витрине `/welcome`, где под стеклом лежит стена постеров, а свайпов нет.
+
+   Файл подключается последним: он переопределяет вид, но не раскладку.
+   Там, где у компонента может быть своя тень или фон, правила обёрнуты
+   в `:where()` — нулевая специфичность, компонент побеждает.
+   ──────────────────────────────────────────────────────────────── */
+
+/* ── 1. Кромка света ─────────────────────────────────────────── */
+
+:where(.hud__pill, .feed-switch, .segmented, .action, .toast) { position: relative; }
+
+.hud__pill::after,
+.feed-switch::after,
+.segmented::after,
+.action::after,
+.toast::after {
+  content: '';
+  position: absolute;
+  /* Поверх собственной рамки элемента: свет лежит на кромке, а не внутри. */
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--lg-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.8;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* Под пальцем стекло ловит больше света — отклик без сжатия рамки. */
+.hud__pill:hover::after,
+.hud__pill:active::after,
+.action:hover:not(:disabled)::after,
+.action:active:not(:disabled)::after { opacity: 1; }
+
+/* ── 2. Толща ────────────────────────────────────────────────── */
+
+.hud__pill,
+.feed-switch,
+.segmented,
+.toast { background-image: var(--lg-caustic); }
+
+/*
+ * Кнопка колоды — капля: блик-полумесяц сверху и свет, вышедший
+ * снизу. Цветное свечение «хочу» и «избранного» остаётся — пишем
+ * его заново, иначе этот файл, подключённый позже, его бы стёр.
+ */
+.action {
+  --lg-drop:
+    radial-gradient(70% 42% at 50% 6%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 72%),
+    radial-gradient(60% 28% at 50% 100%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 70%);
+  background-image: var(--lg-drop);
+}
+.action--wish {
+  background-image: var(--lg-drop),
+    radial-gradient(circle at 50% 45%, rgba(255, 194, 75, 0.3), rgba(255, 194, 75, 0) 72%);
+}
+.action--fav {
+  background-image: var(--lg-drop),
+    radial-gradient(circle at 50% 45%, rgba(255, 77, 94, 0.3), rgba(255, 77, 94, 0) 72%);
+}
+
+/* Поверхности — только кромка сверху: их на экране десятки. */
+:where(.surface) { box-shadow: var(--lg-shine); }
+
+.btn--primary {
+  background: var(--lg-caustic), var(--grad-flame);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34),
+              inset 0 -2px 6px rgba(110, 0, 20, 0.22),
+              var(--glow-coral);
+}
+.btn--gold {
+  background: var(--lg-caustic), var(--grad-gold);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5),
+              inset 0 -2px 6px rgba(120, 60, 0, 0.2),
+              var(--glow-gold);
+}
+.btn--ghost {
+  background: var(--lg-caustic), rgba(255, 255, 255, 0.05);
+  box-shadow: var(--lg-shine);
+}
+.btn--ghost:hover:not(:disabled) { background: var(--lg-caustic), rgba(255, 255, 255, 0.09); }
+
+.chip--on {
+  background: var(--lg-caustic), var(--coral-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 190, 196, 0.22);
+}
+
+/*
+ * Шторка остаётся плотной — на ней читают описание, — но получает
+ * световую кромку и отблеск под верхним краем. Фон у прокручиваемого
+ * блока привязан к самому блоку, поэтому отблеск не уезжает с текстом.
+ */
+.sheet {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px), var(--ink-900);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--shadow-card);
+}
+.sheet__grabber {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/*
+ * Нижняя панель. Прижата к кромке и плотная — так решено ради батареи
+ * (см. `shell.css`). Стекло ей дают свет по верхней кромке, ярче
+ * к середине, и лёгкая толща под ним.
+ */
+.dock {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0)) top / 100% 1px no-repeat,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 60%),
+    var(--glass-bg-strong);
+}
+
+/* Боковая панель студии — стеклянная плита: кромка по краю, свет сверху. */
+.studio__side {
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, rgba(18, 18, 28, 0.62), rgba(6, 6, 10, 0.62));
+}
+
+/* ── 3. Текучесть: жидкая линза ──────────────────────────────── */
+/*
+ * Линза — псевдоэлемент дорожки. Её место считает CSS из двух чисел,
+ * которые отдаёт `useGlassLens`: номер пункта и сколько их всего.
+ * Пункты на дорожке равной ширины, поэтому шаг — ширина самой линзы
+ * плюс зазор, и `100%` внутри translate ровно это и значит.
+ *
+ * `isolation` делает дорожку отдельным слоем: линза с z-index −1
+ * ложится поверх фона дорожки, но под пункты — без перестановки узлов.
+ */
+:where([data-lens]) { position: relative; }
+[data-lens] { isolation: isolate; }
+
+[data-lens]::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: var(--lens-top, 3px);
+  left: var(--lens-x, 3px);
+  height: var(--lens-h, calc(100% - 6px));
+  width: calc((100% - 2 * var(--lens-x, 3px) - (var(--lens-n) - 1) * var(--lens-gap, 2px)) / var(--lens-n));
+  border-radius: var(--lens-r, var(--r-pill));
+  background: var(--lens-bg);
+  box-shadow: var(--lens-shadow);
+  transform: translateX(calc(var(--lens-i) * (100% + var(--lens-gap, 2px))));
+  transition: transform var(--lg-dur) var(--lg-ease), opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+[data-lens='idle']::before { opacity: 0; }
+
+/* Два одинаковых набора кадров: смена имени перезапускает растяжение. */
+[data-lens='odd']::before { animation: lens-stretch-a var(--lg-dur) var(--ease-out); }
+[data-lens='even']::before { animation: lens-stretch-b var(--lg-dur) var(--ease-out); }
+@keyframes lens-stretch-a {
+  0%, 100% { scale: 1 1; }
+  35% { scale: var(--lens-sx, 1.14) var(--lens-sy, 0.86); }
+}
+@keyframes lens-stretch-b {
+  0%, 100% { scale: 1 1; }
+  35% { scale: var(--lens-sx, 1.14) var(--lens-sy, 0.86); }
+}
+
+/* Линза нейтрального стекла — для навигации. */
+.dock[data-lens],
+.studio__nav[data-lens] {
+  --lens-bg: var(--lg-caustic), rgba(255, 255, 255, 0.08);
+  --lens-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24),
+                 inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+                 inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.dock[data-lens] {
+  /* Совпадает с отступами и высотой пунктов дока в `shell.css`. */
+  --lens-top: 6px;
+  --lens-x: var(--s-2);
+  --lens-h: 52px;
+  --lens-gap: 2px;
+  --lens-r: var(--r-md);
+}
+.dock[data-lens] .dock__item[aria-current='page'] { background: transparent; }
+
+/* Переключатель разделов — линза из коралла: выбранное горит. */
+.segmented[data-lens] {
+  --lens-gap: 2px;
+  --lens-bg: var(--lg-caustic), var(--grad-flame);
+  --lens-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
+                 inset 0 -2px 6px rgba(110, 0, 20, 0.22),
+                 0 8px 22px -10px rgba(255, 77, 94, 0.7);
+}
+.segmented[data-lens] .segmented__item[aria-selected='true'] {
+  background: transparent;
+  box-shadow: none;
+}
+
+/*
+ * Тумблер ленты. Половины уравнены по ширине — иначе линзе пришлось бы
+ * менять размер на ходу, а капля, которая перетекает и одновременно
+ * раздувается, читается как сбой, а не как жидкость.
+ */
+.feed-switch[data-lens] {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  --lens-gap: 3px;
+  --lens-bg: var(--lg-caustic), rgba(255, 77, 94, 0.16);
+  --lens-shadow: inset 0 1px 0 rgba(255, 170, 178, 0.3),
+                 inset 0 0 0 1px rgba(255, 77, 94, 0.3);
+}
+.feed-switch[data-lens] .feed-switch__item { justify-content: center; }
+.feed-switch[data-lens] .feed-switch__item--on { background: transparent; }
+
+/*
+ * Боковое меню студии — та же линза, но по вертикали. Коралловая
+ * черта слева едет вместе с ней: у пункта она перескакивала бы
+ * мгновенно, пока линза ещё в пути.
+ */
+.studio__nav[data-lens] {
+  --lens-top: 0px;
+  --lens-x: 0px;
+  --lens-h: 46px;
+  --lens-r: var(--r-sm);
+  --lens-sx: 0.97;
+  --lens-sy: 1.12;
+  --lens-bg: var(--lg-caustic), var(--coral-soft);
+  --lens-shadow: inset 0 1px 0 rgba(255, 190, 196, 0.2),
+                 inset 0 0 0 1px rgba(255, 77, 94, 0.14);
+}
+/* У второго меню сверху отступ под разделитель — линза начинается ниже. */
+.studio__nav--secondary[data-lens] { --lens-top: var(--s-4); }
+.studio__nav[data-lens]::before {
+  width: 100%;
+  /* 46 пикселей пункта и 2 зазора — шаг по вертикали. */
+  transform: translateY(calc(var(--lens-i) * 48px));
+}
+.studio__nav[data-lens]::after {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: calc(var(--lens-top) + 12px);
+  width: 3px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--grad-flame);
+  transform: translateY(calc(var(--lens-i) * 48px));
+  transition: transform var(--lg-dur) var(--lg-ease), opacity var(--dur-base) var(--ease-out);
+  pointer-events: none;
+}
+.studio__nav[data-lens='idle']::after { opacity: 0; }
+.studio__nav[data-lens] .studio__nav-item[aria-current='page'] { background: transparent; }
+.studio__nav[data-lens] .studio__nav-item[aria-current='page']::before { display: none; }
+@media (max-width: 1080px) {
+  .studio__nav[data-lens]::after { left: -8px; }
+}
+
+/* ── Доступность ─────────────────────────────────────────────── */
+
+/* Просили меньше прозрачности — стекло становится плотным. */
+@media (prefers-reduced-transparency: reduce) {
+  .hud__pill, .feed-switch, .toast { background: var(--ink-800); }
+  .hud__pill::after, .feed-switch::after, .segmented::after,
+  .action::after, .toast::after { opacity: 0.4; }
+}
+
+/* Движение выключено — линза встаёт на место без растяжения. */
+@media (prefers-reduced-motion: reduce) {
+  [data-lens]::before, .studio__nav[data-lens]::after { animation: none; transition: none; }
+}

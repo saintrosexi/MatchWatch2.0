@@ -61,7 +61,7 @@ export const metricsHandler = withHandler({ methods: ['GET'], module: MODULE.OPS
   const env = query.get('env') ?? telemetryEnv;
   const since = dayKeyOffset(days - 1);
 
-  const [daily, retention, topErrors, topBusiness, funnel, feedback] = await Promise.all([
+  const [daily, retention, topErrors, topBusiness, funnel, feedback, acquisition] = await Promise.all([
     sbSelect('ops_daily', {
       select: '*', environment: `eq.${env}`, day: `gte.${since}`, order: 'day.asc',
     }),
@@ -79,6 +79,13 @@ export const metricsHandler = withHandler({ methods: ['GET'], module: MODULE.OPS
       order: 'created_at.desc',
       limit: '30',
     }),
+    /*
+     * Отчёт по источникам появился позже остального, и его функция
+     * живёт в отдельной миграции. Пока она не применена, дашборд
+     * должен открываться как раньше, а не падать целиком: `null`
+     * здесь значит «отчёта нет», а не «никто не пришёл».
+     */
+    sbRpc('ops_acquisition', { p_environment: env, p_days: days }).catch(() => null),
   ]);
 
   const byDay = new Map((daily ?? []).map((row) => [row.day, row]));
@@ -146,6 +153,12 @@ export const metricsHandler = withHandler({ methods: ['GET'], module: MODULE.OPS
     timeline,
     totals,
     funnel: funnelSteps,
+    sources: acquisition === null ? null : (acquisition ?? []).map((row) => ({
+      source: row.source,
+      people: Number(row.people ?? 0),
+      calibrated: Number(row.calibrated ?? 0),
+      matched: Number(row.matched ?? 0),
+    })),
     feedback: (feedback ?? []).map((row) => ({
       id: row.id,
       body: row.body,

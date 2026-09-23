@@ -1,5 +1,6 @@
 import { WifiOff } from '../../ui/icons.js';
 import { BrandLockup, BrandMark } from '../../ui/Brand.jsx';
+import { useGlassLens } from '../../ui/useGlassLens.js';
 
 /**
  * Desktop Cinema Studio.
@@ -12,6 +13,10 @@ export function DesktopStudio({
   nav, secondaryNav = [], active, onNavigate, title, subtitle, actions, children,
   user, online = true, onLogout, onOpenProfile,
 }) {
+  /* У каждого меню своя линза: выбранный пункт может быть в любом из двух. */
+  const lens = useGlassLens(nav.findIndex((item) => item.current ?? active === item.key), nav.length);
+  const secondaryLens = useGlassLens(secondaryNav.findIndex((item) => item.current), secondaryNav.length);
+
   return (
     <div className="studio">
       <aside className="studio__side">
@@ -26,7 +31,7 @@ export function DesktopStudio({
           </span>
         </div>
 
-        <nav className="studio__nav" aria-label="Основная навигация">
+        <nav className="studio__nav" aria-label="Основная навигация" {...lens}>
           {nav.map((item) => (
             <button
               key={item.key}
@@ -53,7 +58,7 @@ export function DesktopStudio({
           * друзей за переключателем незачем — это отдельный маршрут.
           */}
         {secondaryNav.length > 0 && (
-          <nav className="studio__nav studio__nav--secondary" aria-label="Аккаунт">
+          <nav className="studio__nav studio__nav--secondary" aria-label="Аккаунт" {...secondaryLens}>
             {secondaryNav.map((item) => (
               <button
                 key={item.key}

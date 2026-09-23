@@ -1,4 +1,5 @@
 import { Flame, Heart } from '../../ui/icons.js';
+import { useGlassLens } from '../../ui/useGlassLens.js';
 
 /**
  * Переключатель режима ленты.
@@ -22,8 +23,10 @@ const MODES = [
 ];
 
 export function FeedModeSwitch({ value = 'calm', onChange }) {
+  const lens = useGlassLens(MODES.findIndex((m) => m.key === value), MODES.length);
+
   return (
-    <div className="feed-switch" role="group" aria-label="Режим ленты">
+    <div className="feed-switch" role="group" aria-label="Режим ленты" {...lens}>
       {MODES.map(({ key, label, icon: Icon, hint }) => {
         const on = value === key;
         return (

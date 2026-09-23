@@ -1212,3 +1212,42 @@ test('B57 · запасной отбор каталога повторяет у�
   // Без даты выхода год неизвестен: под ограничение по годам он не проходит.
   assert.ok(!matchesFilters({ genre_ids: [18] }, { yearFrom: 2000 }));
 });
+
+test('B58 · метка кампании подписывает заход и не открывает ничего лишнего', async () => {
+  const {
+    parseStartParam, acquisitionSource, sourceStartParam, normalizeSourceTag, SOURCE,
+  } = await import('../shared/model/startParam.js');
+
+  // Метка — отдельный вид, а не раздел, комната или профиль.
+  assert.deepEqual(parseStartParam('src_habr'), { kind: 'source', source: 'habr' });
+  assert.deepEqual(parseStartParam('SRC_TikTok'), { kind: 'source', source: 'tiktok' });
+  assert.equal(parseStartParam('src_'), null, 'пустая метка — не метка');
+
+  // Прежние виды разбираются как раньше.
+  assert.equal(parseStartParam('23356')?.kind, 'room');
+  assert.equal(parseStartParam('u_alice')?.kind, 'profile');
+  assert.equal(parseStartParam('rooms')?.kind, 'view');
+
+  // Сборка и разбор сходятся, мусор отбрасывается до алфавита Telegram.
+  assert.equal(sourceStartParam(' VK Ads! '), 'src_vkads');
+  assert.equal(sourceStartParam('   '), null);
+  assert.equal(normalizeSourceTag('x'.repeat(80)).length, 32);
+  assert.deepEqual(parseStartParam(sourceStartParam('pikabu')), { kind: 'source', source: 'pikabu' });
+
+  // Источник: метка важнее всего, потом utm, потом сама ссылка.
+  assert.equal(acquisitionSource('src_habr', '?utm_source=vk'), 'habr');
+  assert.equal(acquisitionSource(null, '?utm_source=VK&utm_medium=post'), 'vk');
+  assert.equal(acquisitionSource('23356'), SOURCE.INVITE);
+  assert.equal(acquisitionSource(null, '?room=23356'), SOURCE.INVITE);
+  assert.equal(acquisitionSource('u_alice'), SOURCE.PROFILE);
+  assert.equal(acquisitionSource('deck'), SOURCE.BOT);
+  assert.equal(acquisitionSource(null, ''), null, 'прямой заход — без метки');
+  assert.equal(acquisitionSource(undefined), null);
+});
+
+test('B59 · описание бота укладывается в лимиты Telegram', async () => {
+  const { BOT_DESCRIPTION, BOT_SHORT_DESCRIPTION } = await import('../api/_lib/botSetup.js');
+  // Длиннее — и Telegram отклонит вызов целиком, витрина бота останется пустой.
+  assert.ok(BOT_DESCRIPTION.length <= 512, `описание: ${BOT_DESCRIPTION.length} > 512`);
+  assert.ok(BOT_SHORT_DESCRIPTION.length <= 120, `короткое: ${BOT_SHORT_DESCRIPTION.length} > 120`);
+});
