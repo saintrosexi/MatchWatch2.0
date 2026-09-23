@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ProfileView } from './ProfileView.jsx';
 import { FriendsView } from '../friends/FriendsView.jsx';
+import { useGlassLens } from '../../ui/useGlassLens.js';
 
 /**
  * Раздел «Я»: профиль и друзья под одной вкладкой.
@@ -19,6 +20,7 @@ export function MeView({
   initialTab = 'profile', onOpenPublicProfile, showTabs = true, ...rest
 }) {
   const [tab, setTab] = useState(initialTab);
+  const lens = useGlassLens(TABS.findIndex((t) => t.key === tab), TABS.length);
 
   return (
     <div className="me">
@@ -27,7 +29,7 @@ export function MeView({
         * и переключатель здесь повторял бы навигацию.
         */}
       {showTabs && (
-      <div className="segmented" role="tablist" aria-label="Раздел «Я»">
+      <div className="segmented" role="tablist" aria-label="Раздел «Я»" {...lens}>
         {TABS.map((item) => (
           <button
             key={item.key}

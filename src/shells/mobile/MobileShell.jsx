@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { WifiOff } from '../../ui/icons.js';
 import { BrandLockup } from '../../ui/Brand.jsx';
+import { useGlassLens } from '../../ui/useGlassLens.js';
 
 /**
  * Mobile TMA Shell.
@@ -18,6 +19,8 @@ export function MobileShell({
   user, online = true, statusStrip, right, toolbar, scrollKey,
 }) {
   const mainRef = useRef(null);
+  /* Линза стоит под выбранной вкладкой и перетекает к следующей. */
+  const lens = useGlassLens(nav.findIndex((item) => item.key === active), nav.length);
 
   /*
    * Новый экран начинается сверху.
@@ -60,7 +63,7 @@ export function MobileShell({
         {children}
       </main>
 
-      <nav className="dock" aria-label="Основная навигация">
+      <nav className="dock" aria-label="Основная навигация" {...lens}>
         {nav.map((item) => (
           <button
             key={item.key}
