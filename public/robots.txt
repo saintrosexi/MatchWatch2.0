@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /welcome
+Disallow: /api/
+
+Sitemap: https://matchwatch-seven.vercel.app/sitemap.xml

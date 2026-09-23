@@ -11,10 +11,21 @@
     <title>MatchWatch</title>
     <meta name="description" content="Свайп-подбор фильмов для одного и для двоих: совместные комнаты, мгновенные мэтчи и рекомендации по темам, а не по жанрам." />
 
+    <!--
+      Превью ссылки — PNG с абсолютным адресом. SVG и относительный путь
+      Telegram, ВКонтакте и мессенджеры не показывают вовсе: ссылка на
+      приложение уходила голой строкой, без картинки.
+    -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="MatchWatch" />
+    <meta property="og:site_name" content="MatchWatch" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="MatchWatch — свайпайте кино вдвоём" />
     <meta property="og:description" content="Свайпайте фильмы вдвоём. Совпали — значит, вечер спасён." />
-    <meta property="og:image" content="/logo.svg" />
+    <meta property="og:image" content="https://matchwatch-seven.vercel.app/brand/og-1200x630.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://matchwatch-seven.vercel.app/brand/og-1200x630.png" />
 
     <!-- Telegram Mini Apps SDK: должен загрузиться до приложения -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>

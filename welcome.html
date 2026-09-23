@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+
+    <title>MatchWatch — выбрать фильм вдвоём за пять минут</title>
+    <meta name="description" content="Свайпайте фильмы каждый у себя в телефоне — MatchWatch покажет, на чём вы совпали. Telegram Mini App без установки, рекомендации по темам, а не по жанрам." />
+    <link rel="canonical" href="https://matchwatch-seven.vercel.app/welcome" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MatchWatch" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:url" content="https://matchwatch-seven.vercel.app/welcome" />
+    <meta property="og:title" content="MatchWatch — свайпайте кино вдвоём" />
+    <meta property="og:description" content="Каждый листает у себя. Совпали — значит, вечер спасён. Бесплатно, прямо в Telegram." />
+    <meta property="og:image" content="https://matchwatch-seven.vercel.app/brand/og-1200x630.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MatchWatch: свайпайте кино вдвоём" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MatchWatch — свайпайте кино вдвоём" />
+    <meta name="twitter:description" content="Каждый листает у себя. Совпали — значит, вечер спасён." />
+    <meta name="twitter:image" content="https://matchwatch-seven.vercel.app/brand/og-1200x630.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "MatchWatch",
+        "url": "https://matchwatch-seven.vercel.app/welcome",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Telegram, Web",
+        "inLanguage": "ru",
+        "description": "Свайп-подбор фильмов для одного и для двоих: совместные комнаты, мэтчи и рекомендации по темам, а не по жанрам.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RUB" }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/brand/matchwatch-avatar-512.png" />
+  </head>
+  <body>
+    <!-- Стена постеров: то, что видно сквозь стекло. -->
+    <div class="wall" aria-hidden="true"></div>
+    <div class="wall-shade" aria-hidden="true"></div>
+
+    <header class="nav lg" data-refract="clear">
+      <a class="nav__brand" href="/welcome" aria-label="MatchWatch — на главную">
+        <img src="/logo-mark.svg" alt="" width="34" height="30" />
+        <span class="wordmark"><span class="wordmark__a">Match</span><span class="wordmark__b">Watch</span></span>
+      </a>
+      <nav class="nav__links" aria-label="Разделы">
+        <a href="#how">Как это работает</a>
+        <a href="#features">Возможности</a>
+        <a href="#faq">Вопросы</a>
+      </nav>
+      <a class="btn btn--primary btn--sm" data-cta="telegram" href="https://t.me/MatchWatchApp_bot/app">Открыть</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero__card lg" data-refract>
+          <span class="eyebrow">Telegram Mini App · без установки</span>
+          <h1>Свайпайте кино <span class="accent">вдвоём</span></h1>
+          <p class="lede">
+            Каждый листает фильмы у себя в телефоне. Как только вы оба смахнули
+            вправо одно и то же — это мэтч, и спор «что посмотрим» закончен.
+          </p>
+          <div class="cta">
+            <a class="btn btn--primary btn--lg" data-cta="telegram" href="https://t.me/MatchWatchApp_bot/app">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2l-11 6.9L1.6 12c-1-.3-1-1 .2-1.5L20.5 3.3c.9-.3 1.6.2 1.4 1Z"/></svg>
+              Открыть в Telegram
+            </a>
+            <a class="btn btn--glass btn--lg" data-cta="web" href="/">В браузере</a>
+          </div>
+          <p class="fine">Бесплатно. Первый месяц Premium — в подарок.</p>
+        </div>
+
+        <!-- Макет экрана: что человек увидит через секунду после нажатия. -->
+        <div class="phone lg" aria-hidden="true">
+          <div class="phone__notch"></div>
+          <div class="swipe-card">
+            <img src="https://image.tmdb.org/t/p/w500/vReLRjDV9XPhiOSEW7QWow4DXwf.jpg" alt="" width="500" height="750" />
+            <span class="stamp">Хочу</span>
+            <div class="swipe-card__info">
+              <strong>Интерстеллар</strong>
+              <span class="swipe-card__meta">2014 · фантастика · драма</span>
+              <span class="swipe-card__why">Потому что вы любите <b>космос</b> и <b>путешествия во времени</b></span>
+            </div>
+          </div>
+          <div class="drops">
+            <span class="drop drop--sm">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+            </span>
+            <span class="drop drop--lg drop--coral">
+              <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.3 1 4.3 2.4 1-1.4 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21Z"/></svg>
+            </span>
+            <span class="drop drop--sm drop--gold">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9L12 2.8Z"/></svg>
+            </span>
+          </div>
+          <div class="match-chip lg">
+            <img src="/mascot/match.png" alt="" width="64" height="62" />
+            <span><b>Мэтч!</b> Вы оба хотите «Интерстеллар»</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how">
+        <h2 class="section__title">Три шага до фильма на вечер</h2>
+        <ol class="steps">
+          <li class="step lg">
+            <span class="step__num">1</span>
+            <h3>Создайте комнату</h3>
+            <p>Код из пяти цифр или ссылка прямо в чат Telegram. В комнате — до восьми человек.</p>
+          </li>
+          <li class="step lg">
+            <span class="step__num">2</span>
+            <h3>Свайпайте каждый у себя</h3>
+            <p>Вправо — «хочу», влево — «мимо». Кто что отклонил, не видит никто — поэтому никто не уступает из вежливости.</p>
+          </li>
+          <li class="step lg">
+            <span class="step__num">3</span>
+            <h3>Ловите мэтч</h3>
+            <p>Фильм, который хотят все, появляется сразу — с конфетти. Остаётся выбрать, чья очередь нести попкорн.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="features">
+        <h2 class="section__title">Не просто «популярное»</h2>
+        <div class="tiles">
+          <article class="tile lg">
+            <h3>Темы, а не жанры</h3>
+            <p>Любите самурайское кино — поднимается «феодальная Япония» и «долг и честь», а не абстрактный «боевик».</p>
+          </article>
+          <article class="tile lg">
+            <h3>Объясняет выбор</h3>
+            <p>Под каждой карточкой написано, почему она здесь: какой из ваших любимых фильмов на неё похож.</p>
+          </article>
+          <article class="tile lg">
+            <h3>Только вышедшее</h3>
+            <p>Анонсов нет. Всё, что предложено, можно включить сегодня вечером.</p>
+          </article>
+          <article class="tile lg">
+            <h3>Кино-рулетка</h3>
+            <p>Не хочется выбирать совсем — крутите барабан, и вечер решит случай.</p>
+          </article>
+          <article class="tile lg">
+            <h3>Друзья по вкусу</h3>
+            <p>«У вас четыре общих любимых» — повод позвать человека в комнату сильнее телефонной книжки.</p>
+          </article>
+          <article class="tile lg">
+            <h3>Весь каталог TMDB</h3>
+            <p>Когда хочется найти самому: фильтры по жанру, году и рейтингу, поиск и страницы актёров.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section mascot">
+        <img class="mascot__img" src="/mascot/swipe.png" alt="Чама, пёс-талисман MatchWatch, листает фильмы" width="512" height="512" loading="lazy" />
+        <div class="mascot__bubble lg">
+          <p>«Хватит спорить сорок минут и включать то же, что в прошлый раз. Свайпните пятнадцать карточек — дальше я сам».</p>
+          <span class="faint">— Чама, талисман MatchWatch</span>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <h2 class="section__title">Вопросы</h2>
+        <div class="faq">
+          <details class="lg">
+            <summary>Это бесплатно?</summary>
+            <p>Да: личная лента, каталог, рулетка и три совместные комнаты в месяц — бесплатно. Premium снимает лимит комнат и открывает оформление профиля; первый месяц — в подарок.</p>
+          </details>
+          <details class="lg">
+            <summary>Нужно что-то устанавливать?</summary>
+            <p>Нет. MatchWatch открывается прямо в Telegram как мини-приложение, а на компьютере — в браузере.</p>
+          </details>
+          <details class="lg">
+            <summary>А если второй человек не в Telegram?</summary>
+            <p>Пусть откроет MatchWatch в браузере, войдёт по почте и введёт код комнаты. Комната та же самая.</p>
+          </details>
+          <details class="lg">
+            <summary>Откуда фильмы?</summary>
+            <p>Из открытой базы TMDB: постеры, описания, актёры и режиссёры — на русском, где перевод есть.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="final lg" data-refract>
+        <h2>Сегодня — без спора</h2>
+        <p class="lede">Позовите того, с кем смотрите, и через пять минут фильм будет выбран.</p>
+        <div class="cta">
+          <a class="btn btn--primary btn--lg" data-cta="telegram" href="https://t.me/MatchWatchApp_bot/app">Открыть в Telegram</a>
+          <a class="btn btn--glass btn--lg" data-cta="web" href="/">В браузере</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB" width="92" height="12" loading="lazy" />
+      <p>Данные о фильмах и постеры — The Movie Database (TMDB). MatchWatch использует API TMDB, но не одобрен и не сертифицирован TMDB.</p>
+      <p><a href="https://t.me/MatchWatchApp_bot">@MatchWatchApp_bot</a></p>
+    </footer>
+
+    <script type="module" src="/src/welcome/main.js"></script>
+  </body>
+</html>
