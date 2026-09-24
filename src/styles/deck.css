@@ -26,10 +26,9 @@
 .card {
   position: absolute;
   inset: 0;
-  border-radius: var(--r-lg);
+  border-radius: var(--r);
   overflow: hidden;
   background: var(--ink-800);
-  box-shadow: var(--shadow-card);
   transform-origin: center bottom;
   user-select: none;
   -webkit-user-select: none;
@@ -114,10 +113,7 @@
   justify-content: center;
   gap: var(--s-3);
   padding: var(--s-8);
-  text-align: center;
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(255,77,94,.22), transparent 60%),
-    var(--ink-800);
+  background: var(--ink-800);
 }
 .card__fallback-title { font-family: var(--font-display); font-size: var(--t-title); }
 
@@ -151,7 +147,7 @@
 .card__meta { display: flex; align-items: center; gap: 6px var(--s-2); flex-wrap: wrap; }
 .card__title {
   font-family: var(--font-display);
-  font-size: clamp(22px, 5.4vw, 30px);
+  font-size: var(--t-h1);
   font-weight: 700;
   letter-spacing: -0.025em;
   text-shadow: 0 2px 24px rgba(0,0,0,.8);
@@ -164,7 +160,7 @@
  */
 .card__tag {
   padding: 4px 9px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: rgba(255,255,255,.14);
   font-size: var(--t-micro);
   font-weight: 500;
@@ -173,9 +169,9 @@
 }
 /* Тег, совпавший с профилем вкуса, — светится: видно, почему это показано. */
 .card__tag--hit {
-  background: var(--coral-soft);
-  border-color: rgba(255,77,94,.5);
-  color: #ffd0d5;
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--accent);
 }
 
 .card__why {
@@ -186,7 +182,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.card__why strong { color: var(--coral); font-weight: 600; }
+.card__why strong { color: var(--accent); font-weight: 600; }
 
 /*
  * Строка про того, с кем смотрите.
@@ -213,10 +209,10 @@
   padding: 8px 18px;
   /* Штамп появляется во время жеста: размытие здесь пересчитывалось бы
      на каждом кадре свайпа — самое неудачное место для него. */
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   border: 3px solid currentColor;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: var(--t-h1);
   font-weight: 800;
   letter-spacing: 0.06em;
   opacity: 0;
@@ -224,9 +220,9 @@
 }
 .card__stamp--yes {
   left: 24px;
-  color: var(--coral);
+  color: var(--accent);
   transform: rotate(-14deg);
-  background: rgba(255, 77, 94, .14);
+  background: var(--accent-soft);
 }
 .card__stamp--no { right: 24px; color: var(--no); transform: rotate(14deg); background: rgba(90,90,114,.14); }
 
@@ -239,11 +235,11 @@
 .card__stamp--later {
   left: 50%;
   transform: translateX(-50%);
-  font-size: 20px;
+  font-size: var(--t-title);
   white-space: nowrap;
 }
-.card__stamp--seen { top: 40px; color: var(--mint); background: rgba(75,227,164,.14); }
-.card__stamp--later { top: auto; bottom: 140px; color: var(--gold); background: rgba(255,194,75,.14); }
+.card__stamp--seen { top: 40px; color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+.card__stamp--later { top: auto; bottom: 140px; color: var(--accent); background: var(--accent-soft); }
 
 /* Свечение краёв по направлению свайпа. */
 .deck__edge {
@@ -256,8 +252,8 @@
   transition: opacity var(--dur-fast) linear;
   z-index: var(--z-deck);
 }
-.deck__edge--yes { right: 0; background: linear-gradient(to left, rgba(255,194,75,.35), transparent); }
-.deck__edge--no { left: 0; background: linear-gradient(to right, rgba(120,120,150,.28), transparent); }
+.deck__edge--yes { right: 0; background: var(--accent-soft); }
+.deck__edge--no { left: 0; background: color-mix(in srgb, var(--no) 20%, transparent); }
 
 /* ── Панель действий ─────────────────────────────────────────── */
 .actions {
@@ -282,8 +278,7 @@
   background: var(--glass-bg-flat);
   border: 1px solid var(--glass-border);
   color: var(--text-mid);
-  transition: box-shadow var(--dur-base) var(--ease-out),
-              background-color var(--dur-fast) var(--ease-out),
+  transition: background-color var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
 /*
@@ -299,33 +294,14 @@
 .action--sm { width: 46px; height: 46px; }
 .action--md { width: 58px; height: 58px; }
 .action--lg { width: 68px; height: 68px; }
-.action--no:hover { color: var(--text-hi); box-shadow: 0 0 0 1px rgba(255,255,255,.16); }
-/* Цвет закреплён за смыслом: сердце всегда коралловое, отложенное —
-   золотое. Одинаковые действия не должны менять цвет от экрана к экрану. */
-/*
- * Свечение — подсветка внутри кнопки, а не тень снаружи.
- *
- * Снаружи оно было большой размытой тенью, и вебвью на айфоне рисовал
- * её ПРЯМОУГОЛЬНИКОМ: вокруг круглой кнопки стоял отчётливый цветной
- * квадрат. Размытая тень к тому же самая дорогая часть панели — она
- * пересчитывается вместе со всем, что под кнопкой проезжает.
- *
- * Радиальный градиент в фоне обрезается радиусом самой кнопки, поэтому
- * он круглый на любом движке и ничего не стоит сверх обычной заливки.
- */
-.action--wish {
-  color: var(--gold);
-  border-color: rgba(255,194,75,.45);
-  background-image: radial-gradient(circle at 50% 45%, rgba(255,194,75,.3), rgba(255,194,75,0) 72%);
-}
-.action--seen { color: var(--mint); }
-.action--seen:hover { box-shadow: 0 0 0 1px rgba(75,227,164,.4); }
-.action--fav {
-  color: var(--coral);
-  border-color: rgba(255,77,94,.45);
-  background-image: radial-gradient(circle at 50% 45%, rgba(255,77,94,.3), rgba(255,77,94,0) 72%);
-}
-.action--undo:hover:not(:disabled) { color: var(--text-hi); box-shadow: 0 0 0 1px rgba(255,255,255,.16); }
+.action--no:hover { color: var(--text-hi); }
+/* Цвет закреплён за смыслом: сердце и «посмотреть позже» — акцент,
+   «уже смотрел» — успех. Один акцент в системе, поэтому обе иконки
+   совпадают по цвету; различает их сама иконка. */
+.action--wish { color: var(--accent); }
+.action--seen { color: var(--success); }
+.action--fav { color: var(--accent); }
+.action--undo:hover:not(:disabled) { color: var(--text-hi); }
 
 /* ── Прогресс колоды ─────────────────────────────────────────── */
 /*
@@ -355,7 +331,7 @@
   gap: var(--s-3);
   padding: var(--s-4);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r);
   /*
    * Почти непрозрачный фон, а не обычное стекло: под панелью лежит
    * не постер, а плотный текстовый блок карточки — название, теги,
@@ -399,14 +375,14 @@
 .deck-progress__bar {
   flex: 1;
   height: 3px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: var(--ink-700);
   overflow: hidden;
 }
 .deck-progress__fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--grad-flame);
+  background: var(--accent);
   transition: width var(--dur-slow) var(--ease-out);
 }
 
@@ -414,12 +390,12 @@
 .radar { width: 100%; max-width: 320px; margin: 0 auto; }
 .radar__grid { stroke: var(--ink-600); fill: none; stroke-width: 1; }
 .radar__axis { stroke: var(--ink-600); stroke-width: 1; }
-.radar__shape { fill: rgba(255,77,94,.22); stroke: var(--coral); stroke-width: 2; stroke-linejoin: round; }
-.radar__shape--partner { fill: rgba(111,216,255,.18); stroke: var(--ice); }
-.radar__shape--consensus { fill: rgba(255,194,75,.2); stroke: var(--gold); stroke-dasharray: 5 4; }
-.radar__dot { fill: var(--coral); }
-.radar__label { fill: var(--text-mid); font-size: 11px; font-family: var(--font-ui); }
-.radar__value { fill: var(--text-hi); font-size: 11px; font-family: var(--font-mono); font-weight: 600; }
+.radar__shape { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.radar__shape--partner { fill: color-mix(in srgb, var(--text-mid) 18%, transparent); stroke: var(--text-mid); }
+.radar__shape--consensus { fill: var(--accent-soft); stroke: var(--accent); stroke-dasharray: 5 4; }
+.radar__dot { fill: var(--accent); }
+.radar__label { fill: var(--text-mid); font-size: var(--t-micro); font-family: var(--font-ui); }
+.radar__value { fill: var(--text-hi); font-size: var(--t-micro); font-family: var(--font-mono); font-weight: 600; }
 
 
 /* Подсказка про тап по карточке: гасится, как только пользователь
@@ -444,7 +420,6 @@
   align-items: center;
   gap: var(--s-4);
   padding: var(--s-6) var(--s-4);
-  text-align: center;
 }
 .next-round__title {
   font-size: var(--t-body);
@@ -456,7 +431,7 @@
   font-size: var(--t-small);
   line-height: 1.55;
   color: var(--text-mid);
-  border-left: 2px solid var(--coral);
+  border-left: 2px solid var(--accent);
   padding-left: var(--s-3);
   text-align: left;
   /* Появляется, а не подменяется на месте: подмена читается как сбой. */
@@ -500,10 +475,10 @@
  */
 .coach__hole {
   position: absolute;
-  border-radius: var(--r-lg);
+  border-radius: var(--r);
   /* Одной тенью: затемняет всё вокруг и оставляет цель в полном цвете. */
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.78);
-  outline: 2px solid var(--coral);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
   pointer-events: none;
 }
@@ -516,7 +491,7 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-5);
-  border-radius: var(--r-lg);
+  border-radius: var(--r);
   background: var(--ink-900);
   border: 1px solid var(--glass-border);
 }
@@ -530,11 +505,11 @@
   font-size: var(--t-small);
   color: var(--text-hi);
 }
-.coach__row--like svg { color: var(--coral); }
+.coach__row--like svg { color: var(--accent); }
 .coach__row--pass svg { color: var(--no); }
-.coach__row--seen svg { color: var(--mint); }
-.coach__row--wish svg { color: var(--gold); }
-.coach__row--info svg { color: var(--ice); }
+.coach__row--seen svg { color: var(--success); }
+.coach__row--wish svg { color: var(--accent); }
+.coach__row--info svg { color: var(--text-mid); }
 .coach__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
 .coach__dots { display: flex; gap: 5px; }
 .coach__dot {
@@ -542,4 +517,4 @@
   border-radius: 50%;
   background: var(--ink-700);
 }
-.coach__dot--on { background: var(--coral); width: 18px; border-radius: var(--r-pill); }
+.coach__dot--on { background: var(--accent); width: 18px; border-radius: var(--r); }

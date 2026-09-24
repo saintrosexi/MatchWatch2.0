@@ -91,7 +91,7 @@ export function ProfileView({
           <Crown
             size={17}
             weight={premium?.premium ? 'fill' : 'regular'}
-            color={premium?.premium ? 'var(--gold)' : 'var(--text-mid)'}
+            color={premium?.premium ? 'var(--accent)' : 'var(--text-mid)'}
           />
           <span className="stack gap-1" style={{ textAlign: 'left', minWidth: 0 }}>
             <b className="me-bar__title">
@@ -105,7 +105,7 @@ export function ProfileView({
                   : `${price.label} в месяц`}
             </span>
           </span>
-          {premium?.promoAvailable && <span className="chip chip--gold">бесплатно</span>}
+          {premium?.promoAvailable && <span className="chip chip--on">бесплатно</span>}
         </button>
 
         <div className="row row--wrap gap-2">

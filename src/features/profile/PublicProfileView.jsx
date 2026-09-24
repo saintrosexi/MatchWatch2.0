@@ -66,11 +66,11 @@ export function PublicProfileView({
   if (!state.person) {
     return (
       <div className="view">
-        {back}
         <EmptyState
           icon={UserRound}
           title="Профиль не найден"
           text={userId ? 'Этот человек ещё не заполнил профиль.' : `Ника @${username} не существует.`}
+          action={back}
         />
       </div>
     );
@@ -235,7 +235,7 @@ export function PublicProfileView({
           {stats.matches ? <Stat value={stats.matches} label="мэтчей" /> : null}
         </div>
         {person.createdAt && (
-          <p className="faint" style={{ fontSize: 'var(--t-small)', textAlign: 'center' }}>
+          <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
             Здесь с {since(person.createdAt)}
             {stats.decisions ? ` · ${withPlural(stats.decisions, FORMS.DECISION)}` : ''}
           </p>
@@ -249,10 +249,14 @@ export function PublicProfileView({
       {!pinned.length && !favorites.length && !topRated.length && (
         <EmptyState
           icon={UserRound}
-          title={visibility.films === false ? 'Фильмы скрыты' : 'Пока пусто'}
-          text={visibility.films === false
-            ? 'Человек не показывает свои списки — только имя и общую статистику.'
-            : 'Человек ещё ничего не отметил любимым. Загляните позже.'}
+          title={person.isMe
+            ? 'Витрина пока пуста'
+            : visibility.films === false ? 'Фильмы скрыты' : 'Пока пусто'}
+          text={person.isMe
+            ? 'Отметьте несколько фильмов любимыми или закрепите их — они появятся здесь.'
+            : visibility.films === false
+              ? 'Человек не показывает свои списки — только имя и общую статистику.'
+              : 'Человек ещё ничего не отметил любимым. Загляните позже.'}
         />
       )}
 
@@ -463,7 +467,7 @@ function since(iso) {
 function Stat({ value, label, gold = false }) {
   return (
     <div className="stat">
-      <span className="stat__value" style={gold ? { color: 'var(--gold)' } : undefined}>{value}</span>
+      <span className="stat__value" style={gold ? { color: 'var(--accent)' } : undefined}>{value}</span>
       <span className="stat__label">{label}</span>
     </div>
   );

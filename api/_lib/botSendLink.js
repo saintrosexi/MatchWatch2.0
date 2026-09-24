@@ -48,7 +48,7 @@ const LINKS = {
    * адрес, а сообщение с кодом и кнопкой входа.
    */
   room_invite: ({ code }) => ({
-    text: `🍿 <b>Комната ${esc(code)}</b>\n\n`
+    text: `<b>Комната ${esc(code)}</b>\n\n`
       + 'Заходите — выберем кино вместе. Свайпаете каждый со своего '
       + 'телефона, а приложение покажет, на чём вы сошлись.\n\n'
       + '<i>Перешлите это сообщение тому, кого зовёте.</i>',
@@ -57,7 +57,7 @@ const LINKS = {
   }),
 
   stars_shop: () => ({
-    text: `⭐ <b>Где купить Telegram Stars</b>\n\n${PREMIUM_CONFIG.starsShop.url}\n\n`
+    text: `<b>Где купить Telegram Stars</b>\n\n${PREMIUM_CONFIG.starsShop.url}\n\n`
       + `<i>${PREMIUM_CONFIG.starsShop.note}</i>`,
     /*
      * Предпросмотр включён намеренно: карточка бота-обменника делает

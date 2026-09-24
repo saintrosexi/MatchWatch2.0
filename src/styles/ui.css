@@ -15,24 +15,12 @@
   position: relative;
   background: var(--glass-bg-flat);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-md);
+  border-radius: var(--r);
 }
 .surface--solid { background: var(--ink-900); backdrop-filter: none; }
-.surface--raised { box-shadow: var(--shadow-panel); }
-
-/* Волосяная градиентная обводка — фирменная деталь панелей. */
-.surface--hairline::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--grad-hairline);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
+/* «Приподнятая» поверхность лежит в потоке, а не парит над контентом —
+   тень ей не положена, разница даётся плотностью фона. */
+.surface--raised { background: var(--glass-bg-strong); }
 
 /* ── Кнопки ──────────────────────────────────────────────────── */
 .btn {
@@ -42,23 +30,23 @@
   gap: var(--s-2);
   min-height: 44px;
   padding: 0 var(--s-5);
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   font-weight: 600;
   font-size: var(--t-body);
   letter-spacing: -0.01em;
-  transition: transform var(--dur-fast) var(--ease-spring),
-              box-shadow var(--dur-base) var(--ease-out),
-              background var(--dur-base) var(--ease-out);
+  transition: background var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
   white-space: nowrap;
 }
 .btn:active:not(:disabled) { transform: scale(0.96); }
 
 .btn--primary {
-  background: var(--grad-flame);
+  background: var(--accent);
   color: #fff;
-  box-shadow: var(--glow-coral);
 }
-.btn--gold { background: var(--grad-gold); color: #1a1200; box-shadow: var(--glow-gold); }
+.btn--primary:hover:not(:disabled) { background: #ff6675; }
+/* «Gold» — прежнее имя для премиальных кнопок; ценность теперь красит
+   единственный акцент, отдельного цвета «золото» больше нет. */
 .btn--ghost {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
@@ -67,22 +55,20 @@
 .btn--ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.09); }
 .btn--quiet { color: var(--text-mid); }
 .btn--quiet:hover:not(:disabled) { color: var(--text-hi); }
-.btn--danger { background: rgba(255, 77, 94, 0.16); color: var(--coral); }
+.btn--danger { background: rgba(255, 77, 94, 0.16); color: var(--accent); }
 
 /*
- * Необратимое действие. Громкость здесь не украшение: кнопка удаляет
+ * Необратимое действие. Плотность здесь не украшение: кнопка удаляет
  * комнату у всех сразу, и спутать её с соседней «Выйти» нельзя.
  */
 .btn--danger-solid {
-  background: linear-gradient(135deg, var(--acid-red) 0%, var(--acid-red-hot) 100%);
+  background: var(--danger);
   color: #fff;
-  box-shadow: 0 0 0 1px rgba(255, 10, 60, 0.45),
-              0 12px 40px -8px rgba(255, 10, 60, 0.55);
 }
-.btn--danger-solid:hover:not(:disabled) { filter: brightness(1.08); }
+.btn--danger-solid:hover:not(:disabled) { background: #ff2d55; }
 
 /** Тот же смысл в размере иконки: выгнать одного человека. */
-.btn--danger-ghost { color: var(--acid-red); }
+.btn--danger-ghost { color: var(--danger); }
 .btn--danger-ghost:hover:not(:disabled) {
   background: rgba(255, 10, 60, 0.14);
   border-color: rgba(255, 10, 60, 0.4);
@@ -90,7 +76,7 @@
 .btn--block { width: 100%; }
 .btn--lg { min-height: 54px; font-size: var(--t-head); padding: 0 var(--s-8); }
 .btn--sm { min-height: 34px; font-size: var(--t-small); padding: 0 var(--s-4); }
-.btn--icon { width: 44px; padding: 0; border-radius: var(--r-pill); }
+.btn--icon { width: 44px; padding: 0; border-radius: var(--r); }
 
 /* ── Чипы и бейджи ───────────────────────────────────────────── */
 .chip {
@@ -98,40 +84,41 @@
   align-items: center;
   gap: 6px;
   padding: 5px 11px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--glass-border);
   font-size: var(--t-small);
   color: var(--text-mid);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .chip--interactive:hover { background: rgba(255,255,255,.11); color: var(--text-hi); }
 .chip--on {
-  background: var(--coral-soft);
+  background: var(--accent-soft);
   border-color: rgba(255, 77, 94, 0.45);
-  color: var(--coral);
+  color: var(--accent);
 }
-.chip--gold { background: var(--gold-soft); border-color: rgba(255,194,75,.4); color: var(--gold); }
-.chip--ice { background: var(--ice-soft); border-color: rgba(111,216,255,.4); color: var(--ice); }
+/* «Gold» — прежнее имя для ценности (мэтч, хост, премиум): теперь акцент. */
+/* «Ice» — прежнее имя для нейтральной метки (партнёр, франшиза): без цвета. */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r);
   font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.badge--rating { background: var(--gold-soft); color: var(--gold); font-family: var(--font-mono); }
-.badge--live { background: rgba(75, 227, 164, .16); color: var(--mint); }
+.badge--rating { background: var(--accent-soft); color: var(--accent); font-family: var(--font-mono); }
+/* «Live» — статус, не декор: комната действительно занята прямо сейчас. */
+.badge--live { background: rgba(75, 227, 164, .16); color: var(--success); }
 .badge--live::before {
   content: '';
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--mint);
+  background: var(--success);
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
@@ -149,24 +136,24 @@
   padding: 0 var(--s-4);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   color: var(--text-hi);
   transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 .input::placeholder { color: var(--text-faint); }
 .input:focus {
   outline: none;
-  border-color: var(--coral);
+  border-color: var(--accent);
   background: rgba(255, 255, 255, 0.07);
 }
-.input--error { border-color: var(--coral); background: var(--coral-soft); }
+.input--error { border-color: var(--accent); background: var(--accent-soft); }
 
 /* Ввод кода комнаты: 4 крупных моноширинных знака. */
 .code-input {
   width: 100%;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 34px;
+  font-size: var(--t-display);
   font-weight: 700;
   letter-spacing: 0.42em;
   text-indent: 0.42em;
@@ -174,38 +161,47 @@
   min-height: 72px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-md);
+  border-radius: var(--r);
   color: var(--text-hi);
 }
-.code-input:focus { outline: none; border-color: var(--coral); box-shadow: var(--glow-coral); }
+.code-input:focus { outline: none; border-color: var(--accent); }
 
 /* ── Служебные состояния ─────────────────────────────────────── */
+/*
+ * Пустое состояние объясняет причину и ведёт к действию, которое её
+ * снимает — поэтому текст читается слева направо, как обычная колонка,
+ * а не стоит по центру декоративной заглушкой.
+ */
 .state {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: var(--s-4);
-  padding: var(--s-10) var(--s-6);
-  text-align: center;
+  padding: var(--s-10) var(--s-4);
+  text-align: left;
   min-height: 260px;
 }
+/* Внутри страницы у `.view` свой отступ: пустой экран встаёт ровно
+   по краю заголовка, а не уезжает внутрь ещё на один шаг. */
+.view .state { padding-inline: 0; }
+.state__icon { color: var(--text-low); width: 32px; height: 32px; }
 /* У маскота прозрачный фон, поэтому ни скругления, ни подложки не нужно —
    он стоит прямо на чёрном, как задумано. */
 .state__art {
-  width: 140px;
-  height: 140px;
+  width: 100%;
+  max-width: 120px;
+  height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.6));
 }
-.state__title { font-family: var(--font-display); font-size: var(--t-title); }
-.state__text { color: var(--text-mid); max-width: 34ch; font-size: var(--t-body); }
+.state__title { font-family: var(--font-display); font-size: var(--t-head); font-weight: 600; }
+.state__text { color: var(--text-mid); max-width: 65ch; font-size: var(--t-body); }
 
 .spinner {
   width: 34px; height: 34px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--coral);
+  border-top-color: var(--accent);
   animation: spin 720ms linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -214,7 +210,7 @@
   background: linear-gradient(100deg, var(--ink-800) 30%, var(--ink-700) 50%, var(--ink-800) 70%);
   background-size: 220% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
 }
 @keyframes shimmer { to { background-position: -220% 0; } }
 
@@ -242,11 +238,12 @@
   align-items: center;
   gap: var(--s-3);
   padding: var(--s-3) var(--s-5);
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-panel);
+  /* Тост парит над контентом — единственная тень, которую он вправе носить. */
+  box-shadow: var(--shadow-float);
   font-size: var(--t-small);
   pointer-events: auto;
   animation: toast-in var(--dur-base) var(--ease-spring);
@@ -296,13 +293,14 @@
   background: var(--ink-900);
   border: 1px solid var(--glass-border);
   border-bottom: none;
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r) var(--r) 0 0;
   padding: var(--s-3) var(--s-5) calc(var(--safe-bottom) + var(--s-6));
-  box-shadow: var(--shadow-card);
+  /* Шторка парит над колодой — единственная тень, которую она вправе носить. */
+  box-shadow: var(--shadow-float);
   animation: sheet-up var(--dur-slow) var(--ease-out);
 }
 .scrim--center .sheet {
-  border-radius: var(--r-xl);
+  border-radius: var(--r);
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: var(--s-6);
   animation: pop-in var(--dur-base) var(--ease-spring);
@@ -312,7 +310,7 @@
 
 .sheet__grabber {
   width: 40px; height: 4px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: var(--ink-600);
   margin: var(--s-1) auto var(--s-4);
 }
@@ -374,24 +372,15 @@
   letter-spacing: -0.04em;
   white-space: nowrap;
 }
-/* «Match» — светлый, «Watch» — коралловый: как в знаке. */
-.brand__word-a {
-  background: linear-gradient(180deg, #ffffff 0%, #c6c6d2 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.brand__word-b {
-  background: linear-gradient(180deg, #ff8c74 0%, #ef4e4e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+/* «Match» — светлый, «Watch» — акцентный: как в знаке. Заливка сплошная —
+   градиентный текст (background-clip) в интерфейсе больше не используется. */
+.brand__word-a { color: var(--text-hi); }
+.brand__word-b { color: var(--accent); }
 
-.brand--sm .brand__word { font-size: 15px; }
-.brand--md .brand__word { font-size: 19px; }
-.brand--lg .brand__word { font-size: 28px; }
-.brand--xl .brand__word { font-size: clamp(34px, 9vw, 46px); }
+.brand--sm .brand__word { font-size: var(--t-body); }
+.brand--md .brand__word { font-size: var(--t-title); }
+.brand--lg .brand__word { font-size: var(--t-h1); }
+.brand--xl .brand__word { font-size: var(--t-hero); }
 
 /* ── Сегментированный переключатель ──────────────────────────── */
 .segmented {
@@ -399,7 +388,7 @@
   gap: 2px;
   padding: 3px;
   margin: var(--s-4) var(--s-4) 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
 }
@@ -410,16 +399,15 @@
   justify-content: center;
   gap: 6px;
   min-height: 38px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   font-size: var(--t-small);
   font-weight: 600;
   color: var(--text-low);
   transition: color var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
 .segmented__item[aria-selected='true'] {
-  background: var(--grad-flame);
+  background: var(--accent);
   color: #fff;
-  box-shadow: var(--glow-coral);
 }
 .segmented__item:not([aria-selected='true']):hover { color: var(--text-hi); }
 /* На широкой сцене переключатель не растягивается во всю ширину. */
@@ -427,7 +415,7 @@
 .chip__count {
   margin-left: 2px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 700;
   opacity: 0.65;
 }
@@ -439,30 +427,27 @@
   flex: 1;
   min-width: 0;
   height: 38px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   font-family: var(--font-mono);
   font-size: var(--t-small);
   font-weight: 600;
   color: var(--text-low);
-  transition: background var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out),
-              transform var(--dur-fast) var(--ease-spring);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
-.rating__dot:hover { transform: translateY(-2px); }
 /* Заливка идёт слева направо: видно не только выбранный балл, но и «сколько». */
 .rating__dot--on {
-  background: var(--grad-gold);
+  background: var(--accent);
   border-color: transparent;
-  color: #1a1200;
+  color: #fff;
 }
 .rating__caption {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--t-small);
-  color: var(--gold);
+  color: var(--accent);
   min-height: 20px;
 }
 .rating--sm .rating__dot { height: 30px; font-size: var(--t-micro); }
@@ -493,11 +478,9 @@
   border: 0;
   color: inherit;
   cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out),
-              color var(--dur-fast) var(--ease-out);
+  transition: color var(--dur-fast) var(--ease-out);
 }
 /* Размер задаёт колонка, а не атрибут иконки: иначе ужиматься нечему. */
 .star-scale__star svg { width: 100%; height: auto; }
-.star-scale__star:hover { transform: translateY(-2px); }
-.star-scale__star--on { color: var(--gold); }
+.star-scale__star--on { color: var(--accent); }
 

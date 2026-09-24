@@ -116,7 +116,7 @@ export function NewsScreen({ item, onClose, onAction, onOpenAll }) {
           * и «Подробнее» ведут в разные места и обещают разное,
           * а одна общая формулировка врала бы в одном из случаев.
           */}
-        <button type="button" className="btn btn--gold btn--block btn--lg" onClick={onAction}>
+        <button type="button" className="btn btn--primary btn--block btn--lg" onClick={onAction}>
           {isPremium ? <Crown size={17} weight="fill" /> : <Sparkles size={17} />}
           {item.cta ?? (isPremium ? 'Подключить за 0 ₽' : 'Посмотреть')}
         </button>

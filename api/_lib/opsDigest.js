@@ -34,17 +34,17 @@ export const digestHandler = withHandler({ methods: ['GET', 'POST'], module: MOD
   const matches = sum('matches');
 
   const lines = [
-    `📊 MatchWatch — сводка за ${days} дн. [${env}]`,
+    `MatchWatch — сводка за ${days} дн. [${env}]`,
     '',
     `Свайпов: ${swipes} · мэтчей: ${matches} · доля: ${swipes ? ((matches / swipes) * 100).toFixed(1) : 0}%`,
     `Комнат создано: ${sum('rooms_created')} · приглашений: ${sum('invites_sent')}`,
     '',
-    '🔴 Топ-5 ошибок:',
+    'Топ-5 ошибок:',
     ...((errors ?? []).length
       ? errors.map((e, i) => `${i + 1}. ${e.module} · ${e.name} — ${e.total}`)
       : ['  (ошибок нет)']),
     '',
-    '🟡 Топ-5 сбоев логики:',
+    'Топ-5 сбоев логики:',
     ...((business ?? []).length
       ? business.map((e, i) => `${i + 1}. ${e.name} — ${e.total}`)
       : ['  (сбоев нет)']),

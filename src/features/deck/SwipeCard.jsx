@@ -74,12 +74,12 @@ export const SwipeCard = forwardRef(function SwipeCard(
             </span>
           )}
           {explore && (
-            <span className="chip chip--ice" style={{ padding: '2px 8px', fontSize: 10 }}>
+            <span className="chip" style={{ padding: '2px 8px', fontSize: 'var(--t-micro)' }}>
               <Compass size={12} /> разведка
             </span>
           )}
           {!explore && confidence === 'strong' && (
-            <span className="chip chip--on" style={{ padding: '2px 8px', fontSize: 10 }}>
+            <span className="chip chip--on" style={{ padding: '2px 8px', fontSize: 'var(--t-micro)' }}>
               <Sparkles size={12} /> в точку
             </span>
           )}

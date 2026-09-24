@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bookmark, Check, ICON, Search, UserMinus, UserPlus, Users, X } from '../../ui/icons.js';
 import { EmptyState, LoadingState } from '../../ui/States.jsx';
 import { Sheet } from '../../ui/Sheet.jsx';
@@ -23,6 +23,7 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
   const [suggested, setSuggested] = useState([]);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
+  const searchRef = useRef(null);
 
   const refresh = useCallback(() => {
     loadFriends()
@@ -98,6 +99,7 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
       <div className="catalog__search">
         <Search size={16} color="var(--text-low)" />
         <input
+          ref={searchRef}
           className="input"
           style={{ background: 'none', border: 'none', minHeight: 44 }}
           value={query}
@@ -222,7 +224,12 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
             <EmptyState
               icon={Users}
               title="Пока никого"
-              text="Найдите человека по нику или почте — вместе выбирать кино интереснее."
+              text="Друзья пока не добавлены. Найдите человека по нику или почте — вместе выбирать кино интереснее."
+              action={(
+                <button type="button" className="btn btn--primary" onClick={() => searchRef.current?.focus()}>
+                  <Search size={16} /> Найти человека
+                </button>
+              )}
             />
           ) : (
             <div className="stack gap-2">
@@ -287,7 +294,12 @@ export function FriendsView({ me, onOpenProfile, onOpenTitle, toasts }) {
           <EmptyState
             icon={Bookmark}
             title="Совпадений нет"
-            text="Пока вы отложили разное. Посвайпайте ещё — или заведите комнату и выберите вместе."
+            text="Ваши списки «буду смотреть» пока не пересекаются. Посвайпайте ещё — или заведите комнату и выберите вместе."
+            action={(
+              <button type="button" className="btn btn--primary" onClick={() => setShared(null)}>
+                Понятно
+              </button>
+            )}
           />
         )}
 

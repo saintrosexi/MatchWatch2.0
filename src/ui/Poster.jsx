@@ -35,7 +35,7 @@ export function Poster({
     return (
       <div className={`poster-fallback ${className}`} style={fallbackStyle(rounded)} aria-label={alt}>
         <Film size={26} color="var(--text-faint)" />
-        <span style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', padding: '0 8px' }}>
+        <span style={{ fontSize: 'var(--t-micro)', color: 'var(--text-low)', padding: '0 8px' }}>
           {alt || 'Постер недоступен'}
         </span>
       </div>
@@ -67,7 +67,7 @@ const fallbackStyle = (rounded) => ({
   gap: 8,
   width: '100%',
   height: '100%',
-  background: 'linear-gradient(160deg, var(--ink-800), var(--ink-900))',
+  background: 'var(--ink-800)',
   borderRadius: rounded ? 'inherit' : 0,
 });
 

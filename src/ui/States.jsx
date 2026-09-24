@@ -7,7 +7,7 @@ export function EmptyState({ icon: Icon, title, text, action, art }) {
     <div className="state">
       {art
         ? <img className="state__art" src={art} alt="" />
-        : Icon && <Icon size={44} color="var(--text-low)" />}
+        : Icon && <Icon size={32} color="var(--text-low)" />}
       {title && <h3 className="state__title">{title}</h3>}
       {text && <p className="state__text">{text}</p>}
       {action}
@@ -51,7 +51,7 @@ export function SkeletonGrid({ count = 9 }) {
   return (
     <div className="poster-grid">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="skeleton" style={{ aspectRatio: '2 / 3', borderRadius: 'var(--r-md)' }} />
+        <div key={i} className="skeleton" style={{ aspectRatio: '2 / 3', borderRadius: 'var(--r)' }} />
       ))}
     </div>
   );

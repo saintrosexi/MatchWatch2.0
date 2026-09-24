@@ -85,7 +85,7 @@ export function WhatsNewView({ onBack, onOpenPremium, onOpenFeedback }) {
                   ))}
 
                   {item.action === 'premium' && onOpenPremium && (
-                    <button type="button" className="btn btn--gold" onClick={onOpenPremium}>
+                    <button type="button" className="btn btn--primary" onClick={onOpenPremium}>
                       <Crown size={15} weight="fill" /> Посмотреть премиум
                     </button>
                   )}
@@ -101,7 +101,7 @@ export function WhatsNewView({ onBack, onOpenPremium, onOpenFeedback }) {
         * «Напишите нам» без способа написать — просьба, за которую
         * человеку самому искать, куда идти.
         */}
-      <div className="stack gap-3" style={{ textAlign: 'center' }}>
+      <div className="stack gap-3">
         <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
           Есть что сказать про обновление? На этой стадии каждый отзыв
           меняет продукт заметно сильнее, чем потом.

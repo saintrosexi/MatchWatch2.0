@@ -194,7 +194,7 @@ export function RouletteModal({ open, onClose, getPool, onPick, history = {}, ta
         </div>
 
         {result && (
-          <div className="stack gap-2" style={{ textAlign: 'center', alignItems: 'center' }}>
+          <div className="stack gap-2" style={{ alignItems: 'center' }}>
             <h3 style={{ fontSize: 'var(--t-title)' }}>{result.title}</h3>
             <div className="row gap-2">
               {result.rating > 0 && (
@@ -211,7 +211,7 @@ export function RouletteModal({ open, onClose, getPool, onPick, history = {}, ta
         <div className="row gap-3">
           <button
             type="button"
-            className="btn btn--gold btn--lg"
+            className="btn btn--primary btn--lg"
             onClick={requestSpin}
             disabled={spinning || reel.length < 2}
           >

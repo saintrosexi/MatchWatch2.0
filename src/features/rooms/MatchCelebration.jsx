@@ -33,7 +33,7 @@ export function MatchCelebration({
 
     const duration = 1600;
     const end = Date.now() + duration;
-    const colors = ['#FFC24B', '#FF4D5E', '#FF7A3D', '#6FD8FF'];
+    const colors = ['#FF4D5E', '#FFFFFF'];
 
     const frame = () => {
       confetti({ particleCount: 4, angle: 60, spread: 62, origin: { x: 0, y: 0.7 }, colors, disableForReducedMotion: true });
@@ -61,7 +61,7 @@ export function MatchCelebration({
 
   if (!match) return null;
 
-  const text = `Совпали на «${match.title}»! Смотрим вместе 🍿`;
+  const text = `Совпали на «${match.title}»! Смотрим вместе`;
   const inviteUrl = roomInviteLink(roomCode) ?? window.location.origin;
 
   const handleShare = () => {
@@ -157,7 +157,7 @@ export function MatchCelebration({
         <canvas ref={canvasRef} width={1080} height={1350} style={{ display: 'none' }} />
 
         <div className="row gap-3" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-          <button type="button" className="btn btn--gold" onClick={handleShare}>
+          <button type="button" className="btn btn--primary" onClick={handleShare}>
             <Share2 size={16} /> Поделиться
           </button>
           {shareUrl && (
@@ -242,7 +242,7 @@ async function renderShareCard(match, canvas) {
   ctx.fillRect(0, height * 0.55, width, height * 0.45);
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#FFC24B';
+  ctx.fillStyle = '#FF4D5E';
   ctx.font = '700 44px Inter, system-ui, sans-serif';
   ctx.fillText('MATCHWATCH · СОВПАДЕНИЕ', width / 2, height - 300);
 
@@ -252,7 +252,7 @@ async function renderShareCard(match, canvas) {
 
   ctx.fillStyle = 'rgba(255,255,255,0.62)';
   ctx.font = '500 38px Inter, system-ui, sans-serif';
-  ctx.fillText('Совпали и смотрим вместе 🍿', width / 2, height - 80);
+  ctx.fillText('Совпали и смотрим вместе', width / 2, height - 80);
 
   return canvas.toDataURL('image/png');
 }

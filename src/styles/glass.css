@@ -62,9 +62,10 @@
 .toast { background-image: var(--lg-caustic); }
 
 /*
- * Кнопка колоды — капля: блик-полумесяц сверху и свет, вышедший
- * снизу. Цветное свечение «хочу» и «избранного» остаётся — пишем
- * его заново, иначе этот файл, подключённый позже, его бы стёр.
+ * Кнопка колоды — капля: блик-полумесяц сверху и свет, вышедший снизу.
+ * «Избранное» несёт единственный акцент интерфейса — пишем его заново,
+ * иначе этот файл, подключённый позже, его бы стёр. «Хочу посмотреть» —
+ * нейтральное действие, своего цвета у него больше нет.
  */
 .action {
   --lg-drop:
@@ -72,49 +73,26 @@
     radial-gradient(60% 28% at 50% 100%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 70%);
   background-image: var(--lg-drop);
 }
-.action--wish {
-  background-image: var(--lg-drop),
-    radial-gradient(circle at 50% 45%, rgba(255, 194, 75, 0.3), rgba(255, 194, 75, 0) 72%);
-}
 .action--fav {
   background-image: var(--lg-drop),
     radial-gradient(circle at 50% 45%, rgba(255, 77, 94, 0.3), rgba(255, 77, 94, 0) 72%);
 }
 
-/* Поверхности — только кромка сверху: их на экране десятки. */
-:where(.surface) { box-shadow: var(--lg-shine); }
-
-.btn--primary {
-  background: var(--lg-caustic), var(--grad-flame);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34),
-              inset 0 -2px 6px rgba(110, 0, 20, 0.22),
-              var(--glow-coral);
-}
-.btn--gold {
-  background: var(--lg-caustic), var(--grad-gold);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5),
-              inset 0 -2px 6px rgba(120, 60, 0, 0.2),
-              var(--glow-gold);
-}
-.btn--ghost {
-  background: var(--lg-caustic), rgba(255, 255, 255, 0.05);
-  box-shadow: var(--lg-shine);
-}
-.btn--ghost:hover:not(:disabled) { background: var(--lg-caustic), rgba(255, 255, 255, 0.09); }
-
-.chip--on {
-  background: var(--lg-caustic), var(--coral-soft);
-  box-shadow: inset 0 1px 0 rgba(255, 190, 196, 0.22);
-}
+/*
+ * Кнопки и чип «включено» больше не носят каустику и внутреннее свечение:
+ * это были декоративные блик и тень, а не сама стеклянная кромка/линза,
+ * которые остаются единственным местом со свечением и градиентом.
+ */
 
 /*
  * Шторка остаётся плотной — на ней читают описание, — но получает
  * световую кромку и отблеск под верхним краем. Фон у прокручиваемого
  * блока привязан к самому блоку, поэтому отблеск не уезжает с текстом.
+ * Тень — та же, что у любого плавающего элемента: шторка лежит над колодой.
  */
 .sheet {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px), var(--ink-900);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--shadow-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), var(--shadow-float);
 }
 .sheet__grabber {
   background: rgba(255, 255, 255, 0.2);
@@ -162,7 +140,7 @@
   left: var(--lens-x, 3px);
   height: var(--lens-h, calc(100% - 6px));
   width: calc((100% - 2 * var(--lens-x, 3px) - (var(--lens-n) - 1) * var(--lens-gap, 2px)) / var(--lens-n));
-  border-radius: var(--lens-r, var(--r-pill));
+  border-radius: var(--lens-r, var(--r));
   background: var(--lens-bg);
   box-shadow: var(--lens-shadow);
   transform: translateX(calc(var(--lens-i) * (100% + var(--lens-gap, 2px))));
@@ -198,17 +176,17 @@
   --lens-x: var(--s-2);
   --lens-h: 52px;
   --lens-gap: 2px;
-  --lens-r: var(--r-md);
+  --lens-r: var(--r);
 }
 .dock[data-lens] .dock__item[aria-current='page'] { background: transparent; }
 
-/* Переключатель разделов — линза из коралла: выбранное горит. */
+/* Переключатель разделов — линза акцентного цвета: выбранное горит.
+   Внешнего свечения нет — остаётся только внутренняя кромка, она стеклянная. */
 .segmented[data-lens] {
   --lens-gap: 2px;
-  --lens-bg: var(--lg-caustic), var(--grad-flame);
+  --lens-bg: var(--lg-caustic), var(--accent);
   --lens-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38),
-                 inset 0 -2px 6px rgba(110, 0, 20, 0.22),
-                 0 8px 22px -10px rgba(255, 77, 94, 0.7);
+                 inset 0 -2px 6px rgba(110, 0, 20, 0.22);
 }
 .segmented[data-lens] .segmented__item[aria-selected='true'] {
   background: transparent;
@@ -233,23 +211,23 @@
 .feed-switch[data-lens] .feed-switch__item--on { background: transparent; }
 
 /*
- * Боковое меню студии — та же линза, но по вертикали. Коралловая
- * черта слева едет вместе с ней: у пункта она перескакивала бы
- * мгновенно, пока линза ещё в пути.
+ * Боковое меню студии — та же линза, но по вертикали. Акцентная черта
+ * слева едет вместе с ней: у пункта она перескакивала бы мгновенно,
+ * пока линза ещё в пути.
  */
 .studio__nav[data-lens] {
   --lens-top: 0px;
   --lens-x: 0px;
   --lens-h: 46px;
-  --lens-r: var(--r-sm);
+  --lens-r: var(--r);
   --lens-sx: 0.97;
   --lens-sy: 1.12;
-  --lens-bg: var(--lg-caustic), var(--coral-soft);
+  --lens-bg: var(--lg-caustic), var(--accent-soft);
   --lens-shadow: inset 0 1px 0 rgba(255, 190, 196, 0.2),
                  inset 0 0 0 1px rgba(255, 77, 94, 0.14);
 }
-/* У второго меню сверху отступ под разделитель — линза начинается ниже. */
-.studio__nav--secondary[data-lens] { --lens-top: var(--s-4); }
+/* У второго меню сверху свой отступ от первого — линза начинается ниже. */
+.studio__nav--secondary[data-lens] { --lens-top: var(--s-6); }
 .studio__nav[data-lens]::before {
   width: 100%;
   /* 46 пикселей пункта и 2 зазора — шаг по вертикали. */
@@ -262,8 +240,8 @@
   top: calc(var(--lens-top) + 12px);
   width: 3px;
   height: 22px;
-  border-radius: var(--r-pill);
-  background: var(--grad-flame);
+  border-radius: var(--r);
+  background: var(--accent);
   transform: translateY(calc(var(--lens-i) * 48px));
   transition: transform var(--lg-dur) var(--lg-ease), opacity var(--dur-base) var(--ease-out);
   pointer-events: none;

@@ -220,7 +220,7 @@ export const TEXTS = {
     const who = username ? `<b>${esc(name)}</b> (@${esc(username)})` : `<b>${esc(name)}</b>`;
     const where = [screen, release].filter(Boolean).map(esc).join(' · ');
 
-    return `✉️ ${who} пишет:\n\n<blockquote>${esc(body)}</blockquote>`
+    return `${who} пишет:\n\n<blockquote>${esc(body)}</blockquote>`
       + (where ? `\n\n<i>${where}</i>` : '');
   },
 

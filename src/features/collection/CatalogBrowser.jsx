@@ -123,7 +123,7 @@ export function CatalogBrowser({ onOpenTitle, history = {} }) {
             <button
               key={r.value}
               type="button"
-              className={`chip chip--interactive ${filters.minRating === r.value ? 'chip--gold' : ''}`}
+              className={`chip chip--interactive ${filters.minRating === r.value ? 'chip--on' : ''}`}
               aria-pressed={filters.minRating === r.value}
               onClick={() => patch({ minRating: r.value })}
             >
@@ -198,8 +198,23 @@ export function CatalogBrowser({ onOpenTitle, history = {} }) {
           icon={Search}
           title="Ничего не нашлось"
           text={searching
-            ? 'Попробуйте другое название.'
-            : 'Под такие фильтры фильмов нет. Ослабьте рейтинг или уберите жанры.'}
+            ? 'По такому названию фильмов нет. Проверьте написание или попробуйте другое.'
+            : 'Под такие фильтры фильмов нет: рейтинг, жанры и год вместе отсекли всё.'}
+          action={searching
+            ? (
+              <button type="button" className="btn btn--primary" onClick={() => setQuery('')}>
+                <X size={16} /> Сбросить поиск
+              </button>
+            )
+            : (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => setFilters({ minRating: 0, genres: [], sort: 'popularity', yearFrom: null })}
+              >
+                Сбросить фильтры
+              </button>
+            )}
         />
       )}
 

@@ -61,7 +61,7 @@ export function NextRound() {
     <section className="next-round">
       <Loader2 size={ICON.lg} className="spin" />
 
-      <div className="stack gap-1" style={{ textAlign: 'center' }}>
+      <div className="stack gap-1">
         <h2 className="next-round__title">Подбираем следующие фильмы</h2>
         <p className="faint" style={{ fontSize: 'var(--t-small)' }}>
           Порция общая, поэтому появится сразу у всех. Обычно это занимает

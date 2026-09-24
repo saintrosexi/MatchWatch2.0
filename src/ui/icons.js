@@ -67,6 +67,7 @@ export {
    */
   Megaphone,
   ChatsCircle as Chats,
+  ChatCircleText as MessageCircle,
   Lifebuoy,
   ArrowSquareOut as ExternalLink,
   MagnifyingGlass as Search,
