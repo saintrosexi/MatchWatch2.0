@@ -347,10 +347,16 @@ export default function App() {
 
   /* ── Данные пользователя ─────────────────────────────────────── */
   useEffect(() => {
-    if (!user?.uid) return undefined;
+    /*
+     * Без Supabase пользователя нет вовсе, но состояние всё равно нужно:
+     * колода ждёт его (`enabled` ниже), и ранний выход здесь оставлял
+     * ленту на вечном «Подбираем кино». `loadUserState` без uid отдаёт
+     * локальную историю гостя — ту самую, куда пишут его свайпы.
+     */
+    if (!user?.uid && !auth.isDegraded) return undefined;
     let alive = true;
 
-    loadUserState(user.uid)
+    loadUserState(user?.uid)
       .then((state) => {
         if (!alive) return;
         setUserState((prev) => mergeUserState(prev, state));
@@ -379,16 +385,16 @@ export default function App() {
 
     // Подписка сообщает лишь факт изменения: состояние перечитываем целиком,
     // иначе пять таблиц пришлось бы сливать вручную и расхождения неизбежны.
-    const unsubscribe = subscribeUserState(user.uid, () => {
+    const unsubscribe = subscribeUserState(user?.uid, () => {
       if (!alive) return;
-      loadUserState(user.uid).then((state) => {
+      loadUserState(user?.uid).then((state) => {
         // Сбойный разрез не должен стирать то, что уже показано:
         // «список не приехал» и «список пуст» выглядят одинаково.
         if (alive) setUserState((prev) => mergeUserState(prev, state));
       });
     });
 
-    const stopConfig = initRemoteConfig({ uid: user.uid });
+    const stopConfig = initRemoteConfig({ uid: user?.uid });
     /*
      * Источник — чтобы видеть, какой канал продвижения приводит людей.
      * Пишется при каждом заходе, но непустым бывает только у того,
@@ -401,7 +407,7 @@ export default function App() {
     });
 
     return () => { alive = false; unsubscribe?.(); stopConfig?.(); };
-  }, [user?.uid, platform.shell, platform.telegram]);
+  }, [user?.uid, auth.isDegraded, platform.shell, platform.telegram]);
 
   /*
    * ── Кнопки бота-навигатора: открыться сразу на нужном экране ──
