@@ -32,7 +32,7 @@ const walk = (dir, exts = ['.css', '.jsx', '.js']) => {
           result.push(full);
         }
       }
-    } catch (e) {
+    } catch {
       // Skip inaccessible directories
     }
   };
@@ -50,7 +50,7 @@ const lines = (file) => {
       line: i + 1,
       text,
     }));
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -270,9 +270,7 @@ test('D8 · нет трансформаций при наведении (:hover 
     // Simple CSS rule parsing: find :hover selectors and check if their block contains transform/translate/scale
     const hoverRulePattern = /([^{]+:hover[^{]*)\{([^}]+)\}/g;
     let match;
-    const lines_arr = content.split('\n');
     let lineNum = 1;
-    let lastPos = 0;
 
     while ((match = hoverRulePattern.exec(content)) !== null) {
       const ruleContent = match[2];
@@ -315,8 +313,8 @@ test('D10 · тени только на плавающих слоях', async ()
 
   const offenders = cssFiles.flatMap((file) => {
     const content = readFileSync(file, 'utf8');
-    // Parse CSS rules: look for box-shadow outside floating layers
     const lines_arr = content.split('\n');
+    // Parse CSS rules: look for box-shadow outside floating layers
     let inRule = false;
     let currentSelector = '';
     let offenderLines = [];
