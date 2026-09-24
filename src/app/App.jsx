@@ -1124,7 +1124,6 @@ export default function App() {
      */
     <IconContext.Provider value={{ size: ICON.md, weight: 'regular' }}>
     <ErrorBoundary name="app-root">
-      <div className="aurora" data-mood={room.celebration ? 'match' : room.code ? 'room' : undefined} />
       <div className="app-root">
         {platform.shell === 'desktop' ? (
           <DesktopStudio
@@ -1416,6 +1415,8 @@ function renderView(ctx) {
           onOpenTitle={openDetails}
           onRemoveFavorite={handleRemoveFavorite}
           onUndoDecision={handleUndoFromList}
+          onOpenDeck={() => setView(VIEW.DECK)}
+          onOpenRooms={() => setView(VIEW.ROOMS)}
         />
       );
 

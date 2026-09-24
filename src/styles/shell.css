@@ -79,7 +79,7 @@
   height: 30px;
   min-width: 30px;
   padding: 0 var(--s-2);
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   /*
    * Полупрозрачная, но без размытия: под кнопкой лежит логотип, и глухая
    * заливка разрезала бы слово пополам. Размытие решало ту же задачу
@@ -111,7 +111,7 @@
   --strip-text-flex: 1;
   margin: 0 var(--s-4) var(--s-2);
   padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   font-size: var(--t-small);
   background: rgba(255,255,255,.05);
   border: 1px solid var(--glass-border);
@@ -122,7 +122,7 @@
 .status-strip__action {
   flex: 0 0 auto;
   padding: 2px var(--s-2);
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   border: 1px solid currentColor;
   font-size: var(--t-micro);
   font-weight: 600;
@@ -141,9 +141,9 @@
 }
 .status-strip__close:hover { opacity: 1; background: rgba(255,255,255,.1); }
 
-.status-strip--warn { background: var(--gold-soft); border-color: rgba(255,194,75,.35); color: var(--gold); }
-.status-strip--error { background: var(--coral-soft); border-color: rgba(255,77,94,.4); color: #ffc2c8; }
-.status-strip--live { background: rgba(75,227,164,.1); border-color: rgba(75,227,164,.3); color: var(--mint); }
+.status-strip--warn { background: var(--accent-soft); border-color: rgba(255,77,94,.35); color: var(--accent); }
+.status-strip--error { background: rgba(255,10,60,.14); border-color: rgba(255,10,60,.4); color: var(--danger); }
+.status-strip--live { background: rgba(75,227,164,.1); border-color: rgba(75,227,164,.3); color: var(--success); }
 
 /*
  * Панель навигации прижата к нижней кромке.
@@ -190,14 +190,14 @@
   min-width: 0;
   height: 52px;
   padding: 0 var(--s-2);
-  border-radius: var(--r-md);
+  border-radius: var(--r);
   color: var(--text-low);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 600;
   transition: color var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
 .dock__item[aria-current='page'] { color: var(--text-hi); background: rgba(255,255,255,.08); }
-.dock__item[aria-current='page'] .dock__icon { color: var(--coral); }
+.dock__item[aria-current='page'] .dock__icon { color: var(--accent); }
 /*
  * Аватар в панели приглушён, пока вкладка не выбрана: фотография рядом
  * с монохромными иконками иначе перетягивает взгляд на себя и ломает
@@ -214,7 +214,7 @@
 }
 .dock__item[aria-current='page'] .dock__avatar {
   filter: none;
-  border-color: var(--coral);
+  border-color: var(--accent);
 }
 
 .dock__badge {
@@ -222,10 +222,10 @@
   top: 6px; right: 10px;
   min-width: 16px; height: 16px;
   padding: 0 4px;
-  border-radius: var(--r-pill);
-  background: var(--grad-flame);
+  border-radius: var(--r);
+  background: var(--accent);
   color: #fff;
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -239,7 +239,8 @@
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
   height: 100%;
-  gap: 0;
+  /* Зазор вместо прежней разделительной линии между панелью и сценой. */
+  gap: var(--s-2);
 }
 
 .studio__side {
@@ -247,8 +248,9 @@
   flex-direction: column;
   gap: var(--s-2);
   padding: var(--s-6) var(--s-4);
-  border-right: 1px solid var(--glass-border);
-  background: linear-gradient(180deg, rgba(18,18,28,.62), rgba(6,6,10,.62));
+  /* Стеклянный фон и кромка задаются в glass.css — здесь только плоский
+     запасной вариант на случай, если он не подключится. */
+  background: var(--ink-900);
   backdrop-filter: var(--glass-blur);
   overflow-y: auto;
 }
@@ -260,7 +262,7 @@
 }
 .studio__brand-name {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: var(--t-title);
   font-weight: 800;
   letter-spacing: -0.04em;
   white-space: nowrap;
@@ -274,16 +276,16 @@
   gap: var(--s-3);
   height: 46px;
   padding: 0 var(--s-3);
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   color: var(--text-mid);
   font-weight: 500;
   font-size: var(--t-body);
-  transition: all var(--dur-fast) var(--ease-out);
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
   position: relative;
 }
 .studio__nav-item:hover { background: rgba(255,255,255,.05); color: var(--text-hi); }
 .studio__nav-item[aria-current='page'] {
-  background: var(--coral-soft);
+  background: var(--accent-soft);
   color: var(--text-hi);
 }
 .studio__nav-item[aria-current='page']::before {
@@ -291,8 +293,8 @@
   position: absolute;
   left: -16px; top: 12px; bottom: 12px;
   width: 3px;
-  border-radius: var(--r-pill);
-  background: var(--grad-flame);
+  border-radius: var(--r);
+  background: var(--accent);
 }
 .studio__nav-count {
   margin-left: auto;
@@ -301,11 +303,11 @@
   color: var(--text-low);
 }
 
-/* Второй блок навигации прижат к низу — над карточкой аккаунта. */
+/* Второй блок навигации прижат к низу — над карточкой аккаунта. Разделяет
+   их отступ, не линия: граница-разделитель здесь была лишней. */
 .studio__nav--secondary {
   margin-top: auto;
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--glass-border);
+  padding-top: var(--s-6);
 }
 .studio__nav--secondary + .studio__user { margin-top: var(--s-2); }
 
@@ -315,7 +317,7 @@
   align-items: center;
   gap: var(--s-3);
   padding: var(--s-3);
-  border-radius: var(--r-md);
+  border-radius: var(--r);
   background: rgba(255,255,255,.04);
   border: 1px solid var(--glass-border);
 }
@@ -330,8 +332,8 @@
   display: flex;
   align-items: center;
   gap: var(--s-4);
-  padding: var(--s-5) var(--s-8);
-  border-bottom: 1px solid var(--glass-border);
+  /* Разделитель со сценой ниже — воздух, а не линия. */
+  padding: var(--s-5) var(--s-8) var(--s-6);
 }
 .studio__title { font-size: var(--t-title); }
 .studio__content {
@@ -383,14 +385,14 @@
    встало ровно по центру. */
 .hud__avatar-btn {
   border-radius: 50%;
-  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-spring);
 }
 .hud__avatar-btn:active { transform: scale(0.92); }
-.hud__avatar-btn[aria-current='page'] .hud__avatar { border-color: var(--coral); box-shadow: var(--glow-coral); }
+.hud__avatar-btn[aria-current='page'] .hud__avatar { border-color: var(--accent); }
 .hud__avatar--empty {
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: var(--t-small);
   font-weight: 700;
   color: var(--text-mid);
   background: var(--ink-700);
@@ -510,7 +512,7 @@
   align-items: center;
   gap: 3px;
   padding: 3px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   background: rgba(10, 10, 16, 0.58);
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
@@ -525,7 +527,7 @@
   gap: 6px;
   height: 34px;
   padding: 0 var(--s-4);
-  border-radius: var(--r-pill);
+  border-radius: var(--r);
   font-size: var(--t-small);
   font-weight: 600;
   color: var(--text-low);
@@ -533,6 +535,6 @@
   transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 .feed-switch__item--on {
-  background: var(--coral-soft);
-  color: var(--coral);
+  background: var(--accent-soft);
+  color: var(--accent);
 }

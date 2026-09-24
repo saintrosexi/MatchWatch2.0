@@ -39,7 +39,7 @@ const KINDS = {
     id: `room-${code}`,
     title: `Комната ${code}`,
     description: 'Позвать выбрать кино вместе',
-    text: `🍿 <b>Выберем кино вместе?</b>\n\nКомната <b>${esc(code)}</b>. `
+    text: `<b>Выберем кино вместе?</b>\n\nКомната <b>${esc(code)}</b>. `
       + 'Свайпаете каждый со своего телефона, а приложение покажет, '
       + 'на чём вы сошлись.',
     button: [`Войти в комнату ${code}`, appLink(code)],
@@ -49,7 +49,7 @@ const KINDS = {
     id: `profile-${username}`,
     title: 'Мой профиль в MatchWatch',
     description: 'Вкус, любимые фильмы и совпадения',
-    text: `🎬 <b>Мой профиль в MatchWatch</b>\n\n`
+    text: `<b>Мой профиль в MatchWatch</b>\n\n`
       + 'Любимые фильмы, темы вкуса и то, на сколько мы с вами совпадаем.',
     button: ['Посмотреть профиль', appLink(`u_${username}`)],
   }),

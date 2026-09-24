@@ -73,7 +73,7 @@ export function InviteFriends({ code, members = [], toasts }) {
             </span>
 
             {invited.has(person.id) ? (
-              <span className="chip chip--ice"><Check size={12} /> позвали</span>
+              <span className="chip"><Check size={12} /> позвали</span>
             ) : (
               <button
                 type="button"

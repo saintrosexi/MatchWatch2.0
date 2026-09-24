@@ -191,7 +191,7 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
           ) : (
             <button
               type="button"
-              className="btn btn--gold btn--block btn--lg"
+              className="btn btn--primary btn--block btn--lg"
               disabled={busy}
               onClick={pay}
             >
@@ -207,7 +207,7 @@ export function PremiumSheet({ open, onClose, premium, promoAvailable, daysLeft,
               disabled={busy}
               onClick={pay}
             >
-              Оплатить звёздами — {price.stars} ★
+              Оплатить звёздами — {price.stars} звёзд
             </button>
           )}
         </div>

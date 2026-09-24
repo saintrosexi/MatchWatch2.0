@@ -87,7 +87,7 @@ export function AuthScreen({ auth }) {
               {register && (
                 <label className="field">
                   <span className="field__label">Как вас зовут</span>
-                  <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r-sm)' }}>
+                  <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r)' }}>
                     <UserRound size={16} color="var(--text-low)" />
                     <input
                       className="input"
@@ -105,7 +105,7 @@ export function AuthScreen({ auth }) {
 
               <label className="field">
                 <span className="field__label">Email</span>
-                <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r-sm)' }}>
+                <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r)' }}>
                   <AtSign size={16} color="var(--text-low)" />
                   <input
                     className="input"
@@ -122,7 +122,7 @@ export function AuthScreen({ auth }) {
 
               <label className="field">
                 <span className="field__label">Пароль</span>
-                <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r-sm)' }}>
+                <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r)' }}>
                   <KeyRound size={16} color="var(--text-low)" />
                   <input
                     className="input"

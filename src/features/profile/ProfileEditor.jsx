@@ -181,7 +181,7 @@ export function ProfileEditor({ open, onClose, uid, profile, onSaved, toasts }) 
 
         <label className="field">
           <span className="field__label">Ник</span>
-          <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r-sm)' }}>
+          <div className="row gap-2 surface" style={{ padding: '0 var(--s-3)', borderRadius: 'var(--r)' }}>
             <AtSign size={16} color="var(--text-low)" />
             <input
               className="input"
@@ -196,7 +196,7 @@ export function ProfileEditor({ open, onClose, uid, profile, onSaved, toasts }) 
               onChange={(e) => setForm((f) => ({ ...f, username: e.target.value.replace(/[^a-zA-Z0-9._]/g, '') }))}
             />
             {availability === 'checking' && <Loader2 size={16} color="var(--text-low)" />}
-            {availability === 'free' && <Check size={16} color="var(--mint)" />}
+            {availability === 'free' && <Check size={16} color="var(--success)" />}
           </div>
           <span
             className="faint"

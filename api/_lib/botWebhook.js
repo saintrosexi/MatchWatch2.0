@@ -155,12 +155,12 @@ async function handleUpdate(update) {
  * за ним не приходят вовсе — его открывают, когда уже что-то поняли.
  */
 const navMenu = () => navKeyboard([
-  { text: '🎬 Лента', to: DESTINATION.DECK },
-  { text: '👀 Смотрим вместе', to: DESTINATION.ROOMS },
-  { text: '🔖 Моё', to: DESTINATION.MINE },
-  { text: '📚 Каталог', to: DESTINATION.COLLECTION },
-  { text: '✨ Что нового', to: DESTINATION.NEWS },
-  { text: '👑 Премиум', to: DESTINATION.PREMIUM },
+  { text: 'Лента', to: DESTINATION.DECK },
+  { text: 'Смотрим вместе', to: DESTINATION.ROOMS },
+  { text: 'Моё', to: DESTINATION.MINE },
+  { text: 'Каталог', to: DESTINATION.COLLECTION },
+  { text: 'Что нового', to: DESTINATION.NEWS },
+  { text: 'Премиум', to: DESTINATION.PREMIUM },
 ]);
 
 /** Команда → куда ведёт и что сказать по дороге. */

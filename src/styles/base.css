@@ -27,89 +27,12 @@ body {
 }
 
 /*
- * Аврора — единственный источник цвета на чёрном фоне.
- *
- * Здесь было `filter: blur(90px)` на двух слоях размером с экран, и оба
- * непрерывно двигались. Размытие пересчитывается на каждом кадре анимации,
- * то есть телефон рисовал два полноэкранных блюра шестьдесят раз в секунду
- * всё время, пока приложение открыто, — на iPhone это заметно нагревает
- * корпус и сажает батарею.
- *
- * Мягкость даёт сам радиальный градиент: он и так расплывается к краям,
- * а блюр поверх него добавлял почти незаметный глазу нюанс за очень
- * дорогую цену. Движение осталось — трансформация композитного слоя
- * ничего не пересчитывает.
+ * Фон — плоский `--ink-void`, без декоративных пятен и движения.
+ * Раньше здесь была аврора: два размытых радиальных градиента,
+ * непрерывно дрейфующих поверх фона. Она не несла смысла и постоянно
+ * грела видеоядро, поэтому убрана целиком — постоянная анимация ради
+ * декора не окупается батареей телефона.
  */
-.aurora {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-.aurora::before,
-.aurora::after {
-  content: '';
-  position: absolute;
-  width: 70vmax;
-  height: 70vmax;
-  border-radius: 50%;
-  opacity: 0.5;
-}
-.aurora::before {
-  background: radial-gradient(circle, rgba(255, 77, 94, 0.42), rgba(255, 77, 94, 0.12) 45%, transparent 72%);
-  top: -28vmax;
-  left: -18vmax;
-  animation: aurora-drift-a 26s var(--ease-in-out) infinite alternate;
-}
-.aurora::after {
-  background: radial-gradient(circle, rgba(111, 216, 255, 0.28), rgba(111, 216, 255, 0.08) 45%, transparent 72%);
-  bottom: -32vmax;
-  right: -22vmax;
-  animation: aurora-drift-b 32s var(--ease-in-out) infinite alternate;
-}
-.aurora[data-mood='match']::before { background: radial-gradient(circle, rgba(255, 194, 75, 0.45), rgba(255, 194, 75, 0.14) 45%, transparent 72%); }
-.aurora[data-mood='room']::after { background: radial-gradient(circle, rgba(169, 123, 255, 0.34), rgba(169, 123, 255, 0.1) 45%, transparent 72%); }
-
-/*
- * Только перемещение, без масштабирования.
- *
- * Двигать готовый слой браузеру ничего не стоит, а вот менять его
- * масштаб — стоит: чтобы градиент не расплылся, движок перерисовывает
- * его заново под новый размер. Пятно здесь величиной в три четверти
- * экрана, и такая перерисовка шла каждый кадр. Дыхания на четверть
- * минуты всё равно никто не замечает, счёт за него шёл настоящий.
- */
-@keyframes aurora-drift-a {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(14vw, 10vh, 0); }
-}
-@keyframes aurora-drift-b {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-12vw, -8vh, 0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .aurora::before, .aurora::after { animation: none; }
-}
-
-/*
- * На телефоне аврора стоит на месте.
- *
- * Она задумана как единственный источник цвета на чёрном, и на широком
- * экране её действительно видно — она дышит по краям вокруг колоды.
- * На телефоне колода занимает экран целиком, и от авроры остаются
- * поля в палец шириной. За эти поля телефон платил непрерывной работой
- * видеоядра: два полупрозрачных слоя размером с экран пересобирались
- * шестьдесят раз в секунду всё время, пока приложение открыто, —
- * и не переставали, даже когда человек просто читает описание.
- *
- * Цвет остаётся, движение — нет. Это единственная анимация в продукте,
- * которая играет всегда, а не в ответ на действие, и единственная,
- * за которую платят батареей, ничего не получая взамен.
- */
-@media (max-width: 768px) {
-  .aurora::before, .aurora::after { animation: none; }
-}
 
 h1, h2, h3, h4 {
   margin: 0;
@@ -118,6 +41,8 @@ h1, h2, h3, h4 {
   letter-spacing: -0.02em;
   line-height: 1.12;
 }
+/* Мера чтения: строка длиннее 65 символов утомляет глаз даже на широком экране. */
+p, .lede, li { max-width: 65ch; }
 p { margin: 0; }
 
 button {
@@ -149,22 +74,22 @@ input, textarea, select {
   font-size: max(16px, var(--t-body));
 }
 
-a { color: var(--coral); text-decoration: none; }
+a { color: var(--accent); text-decoration: none; }
 
 img { display: block; max-width: 100%; }
 
-::selection { background: var(--coral); color: #fff; }
+::selection { background: var(--accent); color: #fff; }
 
 :focus-visible {
-  outline: 2px solid var(--coral);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r);
 }
 
 /* Скроллбары — тонкие, не спорящие с чёрным. */
 * { scrollbar-width: thin; scrollbar-color: var(--ink-600) transparent; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
-*::-webkit-scrollbar-thumb { background: var(--ink-600); border-radius: var(--r-pill); }
+*::-webkit-scrollbar-thumb { background: var(--ink-600); border-radius: var(--r); }
 *::-webkit-scrollbar-track { background: transparent; }
 
 .sr-only {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Send, X } from '../../ui/icons.js';
+import { MessageCircle, Send, X } from '../../ui/icons.js';
 import {
   ROOM_REACTIONS, loadRoomMessages, sendRoomMessage, subscribeRoomMessages,
 } from '../../engine/rooms.js';
@@ -86,7 +86,7 @@ export function RoomChat({ code, uid, members = [], placement = 'lobby' }) {
         data-placement={placement}
         onClick={() => setOpen(true)}
       >
-        <span className="room-chat__bar-icon">💬</span>
+        <MessageCircle size={16} className="room-chat__bar-icon" />
         <span className="room-chat__bar-text truncate">
           {last
             ? `${nameOf(last.user_id)}: ${last.body}`

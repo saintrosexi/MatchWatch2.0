@@ -235,7 +235,7 @@ export function SettingsView({
         <button type="button" className="member" style={{ cursor: 'pointer', width: '100%' }} onClick={onOpenPremium}>
           <Crown
             size={20}
-            color={premium?.premium ? 'var(--gold)' : 'var(--text-mid)'}
+            color={premium?.premium ? 'var(--accent)' : 'var(--text-mid)'}
             weight={premium?.premium ? 'fill' : 'regular'}
           />
           <span className="stack grow" style={{ textAlign: 'left' }}>
@@ -250,7 +250,7 @@ export function SettingsView({
                   : `${price.label} или ${price.stars} звёзд в месяц`}
             </span>
           </span>
-          {premium?.promoAvailable && <span className="chip chip--gold">бесплатно</span>}
+          {premium?.promoAvailable && <span className="chip chip--on">бесплатно</span>}
         </button>
 
         {/*
@@ -406,7 +406,7 @@ export function SettingsView({
       </div>
 
       {/* Версия внизу — там, где её ищут, и там, где она никому не мешает. */}
-      <p className="faint" style={{ fontSize: 'var(--t-micro)', textAlign: 'center' }}>
+      <p className="faint" style={{ fontSize: 'var(--t-micro)' }}>
         MatchWatch {RELEASE}
         {access?.tier === 'plus' && ' · тариф Plus'}
       </p>

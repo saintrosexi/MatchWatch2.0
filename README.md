@@ -29,7 +29,7 @@
 ## Стек
 
 - **Фронтенд** — React 19, Vite, собственная CSS-система (OLED-палитра, дизайн-язык «Neon Noir»)
-- **Иконки и анимации** — Lucide React, Canvas Confetti, Web Audio API (звук синтезируется, файлов нет)
+- **Иконки и анимации** — Phosphor Icons, Canvas Confetti, Web Audio API (звук синтезируется, файлов нет)
 - **Бэкенд** — серверлес-функции Vercel в `api/`, без тяжёлых SDK: HMAC и Sentry-envelope на встроенном `node:crypto`
 - **Данные** — Supabase: Postgres, Realtime, Auth и RLS
 - **Каталог** — TMDB API, всегда через серверный прокси

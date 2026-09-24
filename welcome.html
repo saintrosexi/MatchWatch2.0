@@ -86,33 +86,14 @@
           <p class="fine">Бесплатно. Первый месяц Premium — в подарок.</p>
         </div>
 
-        <!-- Макет экрана: что человек увидит через секунду после нажатия. -->
-        <div class="phone lg" aria-hidden="true">
-          <div class="phone__notch"></div>
-          <div class="swipe-card">
-            <img src="https://image.tmdb.org/t/p/w500/vReLRjDV9XPhiOSEW7QWow4DXwf.jpg" alt="" width="500" height="750" />
-            <span class="stamp">Хочу</span>
-            <div class="swipe-card__info">
-              <strong>Интерстеллар</strong>
-              <span class="swipe-card__meta">2014 · фантастика · драма</span>
-              <span class="swipe-card__why">Потому что вы любите <b>космос</b> и <b>путешествия во времени</b></span>
-            </div>
-          </div>
-          <div class="drops">
-            <span class="drop drop--sm">
-              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
-            </span>
-            <span class="drop drop--lg drop--coral">
-              <svg viewBox="0 0 24 24" width="26" height="26"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2 0 3.3 1 4.3 2.4 1-1.4 2.3-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21Z"/></svg>
-            </span>
-            <span class="drop drop--sm drop--gold">
-              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="m12 2.8 2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9L12 2.8Z"/></svg>
-            </span>
-          </div>
-          <div class="match-chip lg">
-            <img src="/mascot/match.png" alt="" width="64" height="62" />
-            <span><b>Мэтч!</b> Вы оба хотите «Интерстеллар»</span>
-          </div>
+        <!-- Настоящий скриншот каталога — то, что человек увидит через секунду после нажатия. -->
+        <div class="hero__shot">
+          <img
+            src="/screens/catalog.webp"
+            alt="Каталог фильмов MatchWatch: постеры, фильтры по жанру, году и рейтингу"
+            width="390"
+            height="844"
+          />
         </div>
       </section>
 
@@ -135,6 +116,42 @@
             <p>Фильм, который хотят все, появляется сразу — с конфетти. Остаётся выбрать, чья очередь нести попкорн.</p>
           </li>
         </ol>
+      </section>
+
+      <section class="section" id="screens">
+        <h2 class="section__title">Как это выглядит</h2>
+        <div class="showcase">
+          <figure class="showcase__item">
+            <img
+              src="/screens/rooms.webp"
+              alt="Экран комнаты MatchWatch с кодом приглашения и списком участников"
+              width="280"
+              height="606"
+              loading="lazy"
+            />
+            <figcaption>Комната: код из пяти цифр или ссылка в чат</figcaption>
+          </figure>
+          <figure class="showcase__item">
+            <img
+              src="/screens/title.webp"
+              alt="Карточка фильма в MatchWatch с описанием, жанрами и оценкой"
+              width="280"
+              height="606"
+              loading="lazy"
+            />
+            <figcaption>Карточка фильма: описание, жанры и ваша оценка</figcaption>
+          </figure>
+          <figure class="showcase__item">
+            <img
+              src="/screens/mine.webp"
+              alt="Раздел «Моё» в MatchWatch со списком отложенных и просмотренных фильмов"
+              width="280"
+              height="606"
+              loading="lazy"
+            />
+            <figcaption>«Моё»: что отложили, посмотрели и оценили</figcaption>
+          </figure>
+        </div>
       </section>
 
       <section class="section" id="features">
@@ -164,14 +181,6 @@
             <h3>Весь каталог TMDB</h3>
             <p>Когда хочется найти самому: фильтры по жанру, году и рейтингу, поиск и страницы актёров.</p>
           </article>
-        </div>
-      </section>
-
-      <section class="section mascot">
-        <img class="mascot__img" src="/mascot/swipe.png" alt="Чама, пёс-талисман MatchWatch, листает фильмы" width="512" height="512" loading="lazy" />
-        <div class="mascot__bubble lg">
-          <p>«Хватит спорить сорок минут и включать то же, что в прошлый раз. Свайпните пятнадцать карточек — дальше я сам».</p>
-          <span class="faint">— Чама, талисман MatchWatch</span>
         </div>
       </section>
 

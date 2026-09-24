@@ -7,11 +7,18 @@ import { saveShowcase } from '../../engine/social.js';
 import { accentAllowed, frameAllowed, pinLimitFor } from '../../../shared/config/premium.js';
 
 /** Палитра продукта. Произвольный цвет рано или поздно нечитаем на тёмном. */
+/*
+ * Ключи (`key`) — часть сохранённых данных: у кого-то профиль уже
+ * выкрашен в `gold` или `violet`, и смена идентификатора обесцветила бы
+ * его без предупреждения. Меняем только цвет под ключом, не сам ключ.
+ */
 const ACCENTS = [
-  { key: 'coral', label: 'Коралловый', color: 'var(--coral)' },
-  { key: 'gold', label: 'Золотой', color: 'var(--gold)' },
-  { key: 'ice', label: 'Ледяной', color: 'var(--ice)' },
-  { key: 'mint', label: 'Мятный', color: 'var(--mint)' },
+  { key: 'coral', label: 'Коралловый', color: 'var(--accent)' },
+  /* Личные акценты — литералы, те же, что в views.css → .profile-page[data-accent]:
+     образец в редакторе обязан совпадать с тем, как выкрасится страница. */
+  { key: 'gold', label: 'Золотой', color: '#ffc24b' },
+  { key: 'ice', label: 'Ледяной', color: '#6fd8ff' },
+  { key: 'mint', label: 'Мятный', color: '#4be3a4' },
   { key: 'violet', label: 'Фиолетовый', color: '#a97bff' },
   { key: 'ember', label: 'Уголь', color: '#ff7a3d' },
   { key: 'ocean', label: 'Океан', color: '#3da5ff' },
@@ -177,6 +184,11 @@ export function ShowcaseEditor({
             icon={Heart}
             title="Сначала отметьте любимое"
             text="Визитка собирается из фильмов, которым вы поставили сердечко. Отметьте несколько — и они появятся здесь."
+            action={(
+              <button type="button" className="btn btn--primary" onClick={onClose}>
+                Закрыть и пойти смотреть
+              </button>
+            )}
           />
         ) : (
           <>

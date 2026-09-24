@@ -69,13 +69,13 @@ export function DetailsSheet({
           {title.runtime && <span className="chip">{Math.floor(title.runtime / 60)} ч {title.runtime % 60} мин</span>}
           {(title.genres ?? []).slice(0, 3).map((g) => <span key={g} className="chip">{g}</span>)}
           {title.collection && (
-            <span className="chip chip--ice" title="Часть франшизы">
+            <span className="chip" title="Часть франшизы">
               {title.collection.name.replace(/\s*\(Коллекция\)\s*/i, '')}
             </span>
           )}
         </div>
 
-        {title.tagline && <p className="muted" style={{ fontStyle: 'italic' }}>«{title.tagline}»</p>}
+        {title.tagline && <p className="muted" style={{ fontStyle: 'italic' }}>«{String(title.tagline).replace(/^[«"„“]+|[»"“”]+$/g, '')}»</p>}
 
         {onRate && (
           <section className="section surface" style={{ padding: 'var(--s-4)' }}>

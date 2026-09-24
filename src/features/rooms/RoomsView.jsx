@@ -162,7 +162,9 @@ export function RoomsView({
           <EmptyState
             icon={Users}
             title="Пока пусто"
-            text="Комнаты, в которых вы были, появятся здесь — чтобы вернуться в один тап."
+            /* Без своей кнопки: «Создать комнату» уже стоит главной кнопкой
+               вверху экрана, второй такой же ниже — повтор, а не подсказка. */
+            text="Вы ещё не были ни в одной комнате. Создайте её кнопкой выше — код появится здесь и в следующий раз."
           />
         ) : (
           <div className="room-list">
@@ -269,7 +271,7 @@ function RoomLobby({
     if (invite && keepsAppOpenOnTelegramLink()) {
       const picked = shareViaTelegramPicker({
         url: invite,
-        text: `Заходите в комнату ${room.code} — выберем кино вместе 🍿`,
+        text: `Заходите в комнату ${room.code} — выберем кино вместе`,
       });
       if (picked === 'kept') {
         trackMetric(METRIC.ROOM_INVITE_SENT, { room: room.code });
@@ -439,7 +441,7 @@ function RoomLobby({
       </header>
 
       <div className="room-hero">
-        <span className="eyebrow" style={{ textAlign: 'center' }}>Код комнаты</span>
+        <span className="eyebrow">Код комнаты</span>
         <div className="room-code" aria-label={`Код комнаты ${room.code.split('').join(' ')}`}>
           {room.code}
         </div>
@@ -510,7 +512,7 @@ function RoomLobby({
                     </span>
                   </span>
                 </button>
-                {member.host && <span className="chip chip--gold">хост</span>}
+                {member.host && <span className="chip chip--on">хост</span>}
                 {/*
                   * Уже друзьям кнопку не показываем вовсе.
                   *
@@ -520,7 +522,7 @@ function RoomLobby({
                   * сообщает состояние и ничего не обещает.
                   */}
                 {!isMe && (friendIds?.has(member.uid) ? (
-                  <span className="chip chip--ice" title="Уже в друзьях">
+                  <span className="chip" title="Уже в друзьях">
                     <Check size={12} /> в друзьях
                   </span>
                 ) : (

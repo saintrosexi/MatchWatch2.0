@@ -256,7 +256,7 @@ export function DashboardView({ onBack }) {
 }
 
 function Metric({ label, value, tone }) {
-  const color = tone === 'gold' ? 'var(--gold)' : tone === 'alarm' ? 'var(--coral)' : 'var(--text-hi)';
+  const color = tone === 'gold' ? 'var(--accent)' : tone === 'alarm' ? 'var(--danger)' : 'var(--text-hi)';
   return (
     <div className="stat">
       <span className="stat__value" style={{ color }}>{value ?? '—'}</span>

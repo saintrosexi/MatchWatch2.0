@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Clapperboard, Search, Star } from '../../ui/icons.js';
+import { ArrowLeft, Clapperboard, Search, Star, X } from '../../ui/icons.js';
 import { api, describeError } from '../../lib/api.js';
 import { EmptyState, ErrorState, LoadingState, SkeletonGrid } from '../../ui/States.jsx';
 import { Poster } from '../../ui/Poster.jsx';
@@ -91,7 +91,7 @@ export function StarHubView({ onStartActorDeck, onOpenTitle, initialPersonId = n
         </header>
       )}
 
-      <div className="row gap-2 surface" style={{ padding: '0 var(--s-4)', borderRadius: 'var(--r-pill)' }}>
+      <div className="row gap-2 surface" style={{ padding: '0 var(--s-4)', borderRadius: 'var(--r)' }}>
         <Search size={20} color="var(--text-low)" />
         <input
           className="input"
@@ -106,7 +106,24 @@ export function StarHubView({ onStartActorDeck, onOpenTitle, initialPersonId = n
       {error && <ErrorState error={error} onRetry={loadPopular} module="stars.hub" />}
       {!error && loading && <SkeletonGrid count={12} />}
       {!error && !loading && people.length === 0 && (
-        <EmptyState icon={Star} title="Никого не нашли" text="Попробуйте другое имя — например, «Тосиро Мифунэ»." />
+        <EmptyState
+          icon={Star}
+          title={query ? 'Никого не нашли' : 'Список актёров пуст'}
+          text={query
+            ? 'По такому имени актёров нет. Проверьте написание или попробуйте другое имя.'
+            : 'Не получилось загрузить популярных актёров. Попробуйте ещё раз.'}
+          action={query
+            ? (
+              <button type="button" className="btn btn--primary" onClick={() => setQuery('')}>
+                <X size={16} /> Сбросить поиск
+              </button>
+            )
+            : (
+              <button type="button" className="btn btn--primary" onClick={loadPopular}>
+                Обновить
+              </button>
+            )}
+        />
       )}
 
       {!error && !loading && people.length > 0 && (

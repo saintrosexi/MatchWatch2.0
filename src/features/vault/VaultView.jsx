@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Bookmark, Check, Eye, Heart, Star, Trash2, Users } from '../../ui/icons.js';
+import { Bookmark, Check, Eye, Flame, Heart, Plus, Star, Trash2, Users } from '../../ui/icons.js';
 import { RatingBadge } from '../../ui/RatingPicker.jsx';
 import { EmptyState } from '../../ui/States.jsx';
 import { Poster } from '../../ui/Poster.jsx';
@@ -22,7 +22,7 @@ const TABS = [
 
 export function VaultView({
   room, favorites = {}, watched = {}, wishlist = {}, ratings = {}, matches = {},
-  onOpenTitle, onRemoveFavorite, onUndoDecision,
+  onOpenTitle, onRemoveFavorite, onUndoDecision, onOpenDeck, onOpenRooms,
   embedded = false,
 }) {
   const [tab, setTab] = useState('wishlist');
@@ -85,6 +85,11 @@ export function VaultView({
             icon: Bookmark,
             title: 'Список желаемого пуст',
             text: 'Свайп вправо кладёт фильм сюда — это всё, что вы хотите посмотреть.',
+            action: onOpenDeck && (
+              <button type="button" className="btn btn--primary" onClick={onOpenDeck}>
+                <Flame size={16} /> Открыть ленту
+              </button>
+            ),
           }}
         />
       )}
@@ -99,6 +104,11 @@ export function VaultView({
             icon: Eye,
             title: 'Пока ничего не отмечено',
             text: 'Кнопка с глазом отмечает фильм просмотренным — он уходит из выбора и остаётся здесь.',
+            action: onOpenDeck && (
+              <button type="button" className="btn btn--primary" onClick={onOpenDeck}>
+                <Flame size={16} /> Открыть ленту
+              </button>
+            ),
           }}
         />
       )}
@@ -109,6 +119,11 @@ export function VaultView({
             icon={Star}
             title="Оценок пока нет"
             text="Откройте карточку фильма и поставьте оценку — она влияет на ленту сильнее свайпа."
+            action={onOpenDeck && (
+              <button type="button" className="btn btn--primary" onClick={onOpenDeck}>
+                <Flame size={16} /> Открыть ленту
+              </button>
+            )}
           />
         ) : (
           <div className="poster-grid">
@@ -138,6 +153,11 @@ export function VaultView({
             icon: Heart,
             title: 'Пока ничего не понравилось',
             text: 'Сердечко кладёт фильм сюда и влияет на подборку заметно сильнее обычного свайпа.',
+            action: onOpenDeck && (
+              <button type="button" className="btn btn--primary" onClick={onOpenDeck}>
+                <Flame size={16} /> Открыть ленту
+              </button>
+            ),
           }}
         />
       )}
@@ -148,6 +168,11 @@ export function VaultView({
             icon={Check}
             title="Мэтчей ещё не было"
             text="Позовите друга в комнату — при обоюдном «да» фильм появится здесь с датой."
+            action={onOpenRooms && (
+              <button type="button" className="btn btn--primary" onClick={onOpenRooms}>
+                <Plus size={16} /> Создать комнату
+              </button>
+            )}
           />
         ) : (
           <div className="stack gap-2">
@@ -166,7 +191,7 @@ export function VaultView({
                     {item.roomCode ? ` · комната ${item.roomCode}` : ''}
                   </span>
                 </span>
-                <span className="chip chip--gold">мэтч</span>
+                <span className="chip chip--on">мэтч</span>
               </button>
             ))}
           </div>
@@ -181,6 +206,17 @@ export function VaultView({
             text={room?.code
               ? 'Мэтчи попадают сюда автоматически. Свайпайте — и список наполнится.'
               : 'Создайте комнату или войдите по коду, чтобы вести общий список.'}
+            action={room?.code
+              ? onOpenDeck && (
+                <button type="button" className="btn btn--primary" onClick={onOpenDeck}>
+                  <Flame size={16} /> Открыть ленту
+                </button>
+              )
+              : onOpenRooms && (
+                <button type="button" className="btn btn--primary" onClick={onOpenRooms}>
+                  <Plus size={16} /> Создать комнату
+                </button>
+              )}
           />
         ) : (
           <div className="stack gap-2">
@@ -199,7 +235,7 @@ export function VaultView({
                   aria-label={item.watched ? 'Вернуть в список' : 'Отметить просмотренным'}
                   onClick={() => room.markWatched(item.titleId, !item.watched)}
                 >
-                  {item.watched ? <Check size={16} color="var(--mint)" /> : <Eye size={16} />}
+                  {item.watched ? <Check size={16} color="var(--text-mid)" /> : <Eye size={16} />}
                 </button>
                 <button
                   type="button"
@@ -220,7 +256,7 @@ export function VaultView({
 
 /** Сетка постеров с необязательной кнопкой удаления. */
 function Grid({ items, onOpenTitle, onRemove, removeLabel, empty }) {
-  if (items.length === 0) return <EmptyState {...empty} />;
+  if (items.length === 0) return <EmptyState {...empty} />; // action приходит в `empty.action` от вызывающей вкладки
 
   return (
     <div className="poster-grid">

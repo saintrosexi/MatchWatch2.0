@@ -232,7 +232,7 @@ async function checkForSpike({ level, module: mod, message }) {
   });
 
   await sendAlert(
-    `🚨 MatchWatch [${ENV}]\nВсплеск ошибок: ${count}+ за час (порог ${threshold}).\n`
+    `MatchWatch [${ENV}]\nВсплеск ошибок: ${count}+ за час (порог ${threshold}).\n`
     + `Последняя: ${level.toUpperCase()} ${mod} — ${message}`,
   );
 }
