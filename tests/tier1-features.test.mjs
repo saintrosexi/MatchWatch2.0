@@ -918,3 +918,22 @@ test('F50 · под карточкой назван и любимый фильм
   const bear = entries.find((e) => e.title.id === LIBRARY.paddington.id);
   assert.equal(bear.alsoFor, null, 'чужое партнёру не приписано');
 });
+
+test('F52 · без Supabase лента собирается из локальной истории гостя', async () => {
+  // Локальный режим: пользователя нет, и загрузка состояния обязана
+  // идти в запасной путь, а не выходить раньше времени. Иначе колода
+  // ждёт `userState` вечно и показывает «Подбираем кино» без конца.
+  const { loadUserState } = await import('../src/engine/userData.js');
+  const state = await loadUserState(undefined);
+  assert.ok(state, 'без uid состояние всё равно приходит');
+  for (const key of ['history', 'wishlist', 'watched', 'favorites', 'ratings', 'matches']) {
+    assert.equal(typeof state[key], 'object', `в запасном состоянии есть ${key}`);
+  }
+
+  const app = readFileSync(new URL('../src/app/App.jsx', import.meta.url), 'utf8');
+  const effect = app.slice(app.indexOf('/* ── Данные пользователя'), app.indexOf('/* ── Кнопки бота-навигатора'));
+  assert.ok(effect.includes('loadUserState('), 'эффект загрузки состояния найден');
+  assert.ok(!/if \(!user\?\.uid\) return/.test(effect),
+    'эффект не выходит только из-за отсутствия uid — в локальном режиме его нет всегда');
+  assert.match(effect, /auth\.isDegraded/, 'локальный режим учтён явно');
+});
